@@ -1,9 +1,18 @@
 #pragma once
 
+#include <expected>
 #include <functional>
-#include <vector>
-#include "source_file.hpp"
+#include <variant>
+
+#include "src/source_file.hpp"
 
 namespace discoverer {
-using DiscovererFunction = std::function<std::vector<SourceFile>() noexcept>;
+using Error = std::variant<>;
+struct Result {
+    SourceFile sourceFile;
+    bool hasMore;
 };
+using ReturnType = std::expected<Result, Error>;
+
+using Func = std::function<ReturnType() noexcept>;
+};  // namespace discoverer
