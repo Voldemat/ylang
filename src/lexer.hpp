@@ -26,6 +26,7 @@ enum class SimpleTokenType {
     AT_SIGN,
     COMMA,
     COLON,
+    DOUBLE_COLON,
     SEMICOLON,
     EQUAL,
     GREATER_THAN,
@@ -48,8 +49,7 @@ struct SimpleToken {
 enum class ComplexTokenType {
     IDENTIFIER,
     STRING_LITERAL,
-    NUMBER_LITERAL,
-    LINE_COMMENT,
+    NUMBER_LITERAL
 };
 
 struct ComplexToken {
@@ -67,16 +67,17 @@ struct UnexpectedChar {
 
 using Error = std::variant<UnexpectedChar>;
 using TokenOrError = std::expected<Token, Error>;
-using TOEPair = std::pair<TokenOrError, TokenOrError>;
-using TOEOrPair = std::variant<TokenOrError, TOEPair>;
-using ReturnType = std::optional<TOEOrPair>;
+using FeedResult = std::optional<TokenOrError>;
+
+using ReturnType = std::pair<FeedResult, bool>;
+
 struct State {
     lexer::TokenLocation location;
     std::optional<lexer::ComplexToken> currentComplexToken;
+    std::optional<lexer::SimpleToken> lastSimpleToken;
+    bool skipUntilNextLine;
 };
 using Func = std::function<ReturnType(State &state, char c)>;
-
-lexer::ReturnType lexerFunc(lexer::State &state, char c);
 };  // namespace lexer
 
 namespace std {
