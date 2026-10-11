@@ -38,13 +38,13 @@ impl TryFrom<(u32, u32)> for CPUType {
             0x00000006 => Ok(Self::MC680x0),
             0x00000007 => subtypes::x86::Subtype::try_from(value.0)
                 .map_err(|_| Error::InvalidSubtype)
-                .map(|subtype| Self::X86(subtype)),
+                .map(Self::X86),
             0x00000008 => Ok(Self::MIPS),
             0x00000009 => Ok(Self::NS32352),
             0x0000000B => Ok(Self::HP_PA),
             0x0000000C => subtypes::arm::Subtype::try_from(value.1)
                 .map_err(|_| Error::InvalidSubtype)
-                .map(|subtype| Self::ARM(subtype)),
+                .map(Self::ARM),
             0x0000000D => Ok(Self::MC88000),
             0x0000000E => Ok(Self::SPARC),
             0x0000000F => Ok(Self::I860BigEndian),
