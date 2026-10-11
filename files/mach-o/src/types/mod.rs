@@ -1,15 +1,13 @@
 pub mod cpu;
-pub mod flags;
 pub mod file_type;
+pub mod flags;
 
 pub enum AddressSize {
     B32,
     B64,
 }
 
-pub struct LoadCommand {
-
-}
+pub struct LoadCommand {}
 
 pub struct File {
     pub address_size: AddressSize,

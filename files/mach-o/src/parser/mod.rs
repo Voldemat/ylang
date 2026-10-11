@@ -1,42 +1,36 @@
-#[derive(Debug, PartialEq, Eq)]
-pub struct MachO32BitFile {}
+pub mod types;
 
-impl MachO32BitFile {
-    pub fn parse(buffer: &[u8]) -> Result<Self, ParseError> {
-        Ok(Self {})
-    }
+#[derive(Debug, PartialEq, Eq)]
+pub enum MachOFile<'b> {
+    B32(types::singlearch::b32::File<'b>),
+    B64(types::singlearch::b64::File<'b>),
+    MultiArch(types::multiarch::File<'b>),
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct MachO64BitFile {}
-
-impl MachO64BitFile {
-    pub fn parse(buffer: &[u8]) -> Result<Self, ParseError> {
-        Ok(Self {})
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct MachOMultiArchFile {}
-
-impl MachOMultiArchFile {
-    pub fn parse(buffer: &[u8]) -> Result<Self, ParseError> {
-        Ok(Self {})
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum MachOFile {
-    B32(MachO32BitFile),
-    B64(MachO64BitFile),
-    MultiArch(MachOMultiArchFile),
-}
-
-#[derive(Debug)]
 pub enum ParseError {
     UnknownMagicValue,
 }
 
+impl From<types::singlearch::b32::ParseError> for ParseError {
+    fn from(_: types::singlearch::b32::ParseError) -> Self {
+        Self::UnknownMagicValue
+    }
+}
+
+impl From<types::singlearch::b64::ParseError> for ParseError {
+    fn from(_: types::singlearch::b64::ParseError) -> Self {
+        Self::UnknownMagicValue
+    }
+}
+
+impl From<types::multiarch::ParseError> for ParseError {
+    fn from(_: types::multiarch::ParseError) -> Self {
+        Self::UnknownMagicValue
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ByteOrder {
     BigEndian,
     LittleEndian,
@@ -59,24 +53,59 @@ pub fn read_u32_with_byte_order(byte_order: ByteOrder, buffer: [u8; 4]) -> u32 {
     }
 }
 
-impl MachOFile {
-    pub fn parse(
+impl<'b> MachOFile<'b> {
+    pub fn get_byte_order(self: &Self) -> ByteOrder {
+        match self {
+            Self::B64(f) => f.byte_order,
+            Self::B32(f) => f.byte_order,
+            Self::MultiArch(_) => ByteOrder::BigEndian,
+        }
+    }
+
+    pub fn parse_with_magic(
+        magic: u32,
         byte_order: ByteOrder,
-        buffer: &[u8],
+        buffer: &'b [u8],
     ) -> Result<Self, ParseError> {
-        let (magic_buffer, rest_of_the_buffer) = buffer.split_at(4);
-        let magic_buffer = magic_buffer.try_into().unwrap();
-        if u32::from_be_bytes(magic_buffer) == 0xcafebabe {
-            return MachOMultiArchFile::parse(rest_of_the_buffer)
-                .map(|f| MachOFile::MultiArch(f));
-        };
-        let magic = read_u32_with_byte_order(byte_order, magic_buffer);
         match magic {
-            0xfeedface => MachO32BitFile::parse(rest_of_the_buffer)
-                .map(|f| MachOFile::B32(f)),
-            0xfeedfacf => MachO64BitFile::parse(rest_of_the_buffer)
-                .map(|f| MachOFile::B64(f)),
+            0xfeedface => {
+                types::singlearch::b32::File::parse(byte_order, buffer)
+                    .map(|f| MachOFile::B32(f))
+                    .map_err(|e| e.into())
+            }
+            0xfeedfacf => {
+                types::singlearch::b64::File::parse(byte_order, buffer)
+                    .map(|f| MachOFile::B64(f))
+                    .map_err(|e| e.into())
+            }
             _ => Err(ParseError::UnknownMagicValue),
         }
+    }
+
+    pub fn parse(buffer: &'b [u8]) -> Result<Self, ParseError> {
+        let (magic_buffer, rest_of_the_buffer) = buffer.split_at(4);
+        let magic_buffer = magic_buffer.try_into().unwrap();
+        let magic_big_endian = u32::from_be_bytes(magic_buffer);
+        if magic_big_endian == 0xcafebabe {
+            return types::multiarch::File::parse(rest_of_the_buffer)
+                .map(|f| MachOFile::MultiArch(f))
+                .map_err(|e| e.into());
+        };
+        Self::parse_with_magic(
+            magic_big_endian,
+            ByteOrder::BigEndian,
+            rest_of_the_buffer,
+        )
+        .or_else(|e| {
+            if ParseError::UnknownMagicValue == e {
+                Self::parse_with_magic(
+                    u32::from_le_bytes(magic_buffer),
+                    ByteOrder::LittleEndian,
+                    rest_of_the_buffer,
+                )
+            } else {
+                Err(e)
+            }
+        })
     }
 }

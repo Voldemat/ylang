@@ -147,4 +147,3 @@ impl Flags {
         (self.0 & Self::DYLD_SHAREABLE) != 0
     }
 }
-
