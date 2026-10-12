@@ -35,10 +35,23 @@ impl ByteOrder {
     }
 }
 
-pub fn read_u32_with_byte_order(byte_order: ByteOrder, buffer: [u8; 4]) -> u32 {
+pub const fn read_u32_with_byte_order(
+    byte_order: ByteOrder,
+    buffer: [u8; 4],
+) -> u32 {
     match byte_order {
         ByteOrder::BigEndian => u32::from_be_bytes(buffer),
         ByteOrder::LittleEndian => u32::from_le_bytes(buffer),
+    }
+}
+
+pub const fn read_u64_with_byte_order(
+    byte_order: ByteOrder,
+    buffer: [u8; 8],
+) -> u64 {
+    match byte_order {
+        ByteOrder::BigEndian => u64::from_be_bytes(buffer),
+        ByteOrder::LittleEndian => u64::from_le_bytes(buffer),
     }
 }
 
