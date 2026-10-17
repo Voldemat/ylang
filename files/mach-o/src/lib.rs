@@ -3,4 +3,5 @@
 #![deny(clippy::expect_used)]
 #![deny(clippy::indexing_slicing)]
 pub mod parser;
+pub mod shared;
 pub mod types;

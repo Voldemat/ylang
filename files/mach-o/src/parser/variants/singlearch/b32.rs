@@ -29,8 +29,6 @@ impl<'b> IFile<'b> for File<'b> {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LoadCommandSegment {
-    pub command_type: u32,
-    pub command_size: u32,
     pub segment_name: [u8; 16],
     pub address: u32,
     pub address_size: u32,
@@ -43,55 +41,49 @@ pub struct LoadCommandSegment {
 }
 
 impl LoadCommandSegment {
-    pub fn parse(
+    const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+    const COMMAND_TYPE: u32 = 0x00000001;
+
+    #[allow(clippy::unwrap_used)]
+    pub fn new(
         byte_order: ByteOrder,
-        command_type: u32,
-        buffer: &[u8],
-    ) -> Result<Self, EOF> {
-        Ok(Self {
-            command_type,
-            command_size: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(0..4).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
-            ),
-            segment_name: buffer
-                .get(4..20)
-                .ok_or(EOF)?
-                .try_into()
-                .map_err(|_| EOF)?,
+        buffer: &[u8; Self::BUFFER_SIZE],
+    ) -> Self {
+        Self {
+            segment_name: buffer[0..16].try_into().unwrap(),
             address: read_u32_with_byte_order(
                 byte_order,
-                buffer.get(20..24).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
+                buffer[16..20].try_into().unwrap(),
             ),
             address_size: read_u32_with_byte_order(
                 byte_order,
-                buffer.get(24..28).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
+                buffer[20..24].try_into().unwrap(),
             ),
             file_offset: read_u32_with_byte_order(
                 byte_order,
-                buffer.get(28..32).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
+                buffer[24..28].try_into().unwrap(),
             ),
             size: read_u32_with_byte_order(
                 byte_order,
-                buffer.get(32..36).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
+                buffer[28..32].try_into().unwrap(),
             ),
             maximum_virtual_memory_protections: read_u32_with_byte_order(
                 byte_order,
-                buffer.get(36..40).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
+                buffer[32..36].try_into().unwrap(),
             ),
             initial_virtual_memory_protections: read_u32_with_byte_order(
                 byte_order,
-                buffer.get(40..44).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
+                buffer[36..40].try_into().unwrap(),
             ),
             sections_count: read_u32_with_byte_order(
                 byte_order,
-                buffer.get(44..48).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
+                buffer[40..44].try_into().unwrap(),
             ),
             flags: read_u32_with_byte_order(
                 byte_order,
-                buffer.get(48..52).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
+                buffer[44..48].try_into().unwrap(),
             ),
-        })
+        }
     }
 }
 
@@ -113,37 +105,26 @@ pub enum LoadCommand<'b> {
 impl<'b> ILoadCommand<'b> for LoadCommand<'b> {
     fn get_size(&self) -> u32 {
         match self {
-            Self::Segment(c) => c.command_size,
+            Self::Segment(_) => LoadCommandSegment::BUFFER_SIZE as u32,
             Self::Shared(c) => c.get_size(),
         }
     }
 
     fn parse(
         byte_order: ByteOrder,
+        command_type: u32,
         buffer: &'b [u8],
     ) -> Result<Self, ParseError> {
-        let (command_type_buffer, rest_of_the_buffer) =
-            buffer.split_at_checked(4).ok_or(ParseError::EOF)?;
-        let command_type = read_u32_with_byte_order(
-            byte_order,
-            command_type_buffer
-                .try_into()
-                .map_err(|_| ParseError::EOF)?,
-        );
         match command_type {
-            0x00000001 => LoadCommandSegment::parse(
-                byte_order,
-                command_type,
-                rest_of_the_buffer,
-            )
-            .map(Self::Segment)
-            .map_err(|e| e.into()),
-            _ => SharedLoadCommand::parse(
-                byte_order,
-                command_type,
-                rest_of_the_buffer,
-            )
-            .map(Self::Shared),
+            LoadCommandSegment::COMMAND_TYPE => buffer
+                .try_into()
+                .map_err(|_| ParseError::EOF)
+                .map(|command_buffer| {
+                    LoadCommandSegment::new(byte_order, command_buffer)
+                })
+                .map(Self::Segment),
+            _ => SharedLoadCommand::parse(byte_order, command_type, buffer)
+                .map(Self::Shared),
         }
     }
 }
@@ -157,8 +138,7 @@ impl<'b> File<'b> {
             header_buffer.try_into().map_err(|_| EOF)?;
         Ok(Self {
             byte_order,
-            header: super::shared::Header::parse(byte_order, header_buffer)
-                .map_err(|_| EOF)?,
+            header: super::shared::Header::new(byte_order, header_buffer),
             rest_of_the_buffer,
         })
     }

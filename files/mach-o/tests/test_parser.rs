@@ -19,6 +19,14 @@ pub fn test_64_bit_little_endian_file() {
     assert_eq!(file.header.load_commands_count, 16);
     assert_eq!(file.header.load_commands_size, 744);
     assert_eq!(file.header.flags, 0x00200085);
+    let load_commands = file
+        .get_load_commands()
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    assert_eq!(
+        load_commands.len(),
+        file.header.load_commands_count as usize
+    );
 }
 
 #[test]
