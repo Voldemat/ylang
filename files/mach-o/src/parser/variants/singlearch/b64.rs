@@ -11,9 +11,43 @@ use super::shared::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
+pub struct Header {
+    pub cpu_type: u32,
+    pub cpu_subtype: u32,
+    pub file_type: u32,
+    pub load_commands_count: u32,
+    pub load_commands_size: u32,
+    pub flags: u32,
+    pub _reserved: u32,
+}
+
+impl Header {
+    #[allow(clippy::indexing_slicing)]
+    pub const fn new(
+        byte_order: ByteOrder,
+        value: [u8; std::mem::size_of::<Header>()],
+    ) -> Self {
+        let (chunks, []) = value.as_chunks::<4>() else {
+            unreachable!()
+        };
+        Self {
+            cpu_type: read_u32_with_byte_order(byte_order, chunks[0]),
+            cpu_subtype: read_u32_with_byte_order(byte_order, chunks[1]),
+            file_type: read_u32_with_byte_order(byte_order, chunks[2]),
+            load_commands_count: read_u32_with_byte_order(
+                byte_order, chunks[3],
+            ),
+            load_commands_size: read_u32_with_byte_order(byte_order, chunks[4]),
+            flags: read_u32_with_byte_order(byte_order, chunks[5]),
+            _reserved: read_u32_with_byte_order(byte_order, chunks[6]),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct File<'b> {
     pub byte_order: ByteOrder,
-    pub header: super::shared::Header,
+    pub header: Header,
     pub rest_of_the_buffer: &'b [u8],
 }
 
@@ -22,12 +56,16 @@ impl<'b> IFile<'b> for File<'b> {
         self.byte_order
     }
 
-    fn get_header(&self) -> &super::shared::Header {
-        &self.header
-    }
-
     fn get_rest_of_the_buffer(&self) -> &'b [u8] {
         self.rest_of_the_buffer
+    }
+
+    fn get_load_commands_count(&self) -> u32 {
+        self.header.load_commands_count
+    }
+
+    fn get_load_commands_size(&self) -> u32 {
+        self.header.load_commands_size
     }
 }
 
@@ -139,13 +177,13 @@ impl<'b> ILoadCommand<'b> for LoadCommand<'b> {
 impl<'b> File<'b> {
     pub fn parse(byte_order: ByteOrder, buffer: &'b [u8]) -> Result<Self, EOF> {
         let (header_buffer, rest_of_the_buffer) = buffer
-            .split_at_checked(std::mem::size_of::<super::shared::Header>())
+            .split_at_checked(std::mem::size_of::<Header>())
             .ok_or(EOF)?;
-        let header_buffer: [u8; std::mem::size_of::<super::shared::Header>()] =
+        let header_buffer: [u8; std::mem::size_of::<Header>()] =
             header_buffer.try_into().map_err(|_| EOF)?;
         Ok(Self {
             byte_order,
-            header: super::shared::Header::new(byte_order, header_buffer),
+            header: Header::new(byte_order, header_buffer),
             rest_of_the_buffer,
         })
     }

@@ -48,6 +48,14 @@ pub fn test_32_bit_little_endian_file() {
     assert_eq!(file.header.load_commands_count, 4);
     assert_eq!(file.header.load_commands_size, 388);
     assert_eq!(file.header.flags, 0x00002000);
+    let load_commands = file
+        .get_load_commands()
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    assert_eq!(
+        load_commands.len(),
+        file.header.load_commands_count as usize
+    );
 }
 
 #[test]
@@ -69,6 +77,14 @@ pub fn test_32_bit_big_endian_file() {
     assert_eq!(file.header.load_commands_count, 13);
     assert_eq!(file.header.load_commands_size, 2020);
     assert_eq!(file.header.flags, 0x0001a085);
+    let load_commands = file
+        .get_load_commands()
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    assert_eq!(
+        load_commands.len(),
+        file.header.load_commands_count as usize
+    );
 }
 
 #[test]

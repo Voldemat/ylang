@@ -4,41 +4,6 @@ use crate::parser::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
-#[repr(C)]
-pub struct Header {
-    pub cpu_type: u32,
-    pub cpu_subtype: u32,
-    pub file_type: u32,
-    pub load_commands_count: u32,
-    pub load_commands_size: u32,
-    pub flags: u32,
-    pub _reserved: u32,
-}
-
-impl Header {
-    #[allow(clippy::indexing_slicing)]
-    pub const fn new(
-        byte_order: ByteOrder,
-        value: [u8; std::mem::size_of::<Header>()],
-    ) -> Self {
-        let (chunks, []) = value.as_chunks::<4>() else {
-            unreachable!()
-        };
-        Self {
-            cpu_type: read_u32_with_byte_order(byte_order, chunks[0]),
-            cpu_subtype: read_u32_with_byte_order(byte_order, chunks[1]),
-            file_type: read_u32_with_byte_order(byte_order, chunks[2]),
-            load_commands_count: read_u32_with_byte_order(
-                byte_order, chunks[3],
-            ),
-            load_commands_size: read_u32_with_byte_order(byte_order, chunks[4]),
-            flags: read_u32_with_byte_order(byte_order, chunks[5]),
-            _reserved: read_u32_with_byte_order(byte_order, chunks[6]),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
 pub struct LoadCommandHeader {
     pub command_type: u32,
     pub command_size: u32,
@@ -417,6 +382,48 @@ impl LoadCommandUUIDNumber {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub struct LoadCommandTwoLevelHints {
+    pub file_offset: u32,
+    pub hints_count: u32,
+}
+
+impl LoadCommandTwoLevelHints {
+    const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+
+    #[allow(clippy::unwrap_used)]
+    pub fn new(
+        byte_order: ByteOrder,
+        buffer: &[u8; Self::BUFFER_SIZE],
+    ) -> Self {
+        Self {
+            file_offset: read_u32_with_byte_order(
+                byte_order,
+                buffer.get(0..4).unwrap().try_into().unwrap(),
+            ),
+            hints_count: read_u32_with_byte_order(
+                byte_order,
+                buffer.get(4..8).unwrap().try_into().unwrap(),
+            ),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct LoadCommandThread<'b> {
+    pub buffer: &'b [u8],
+}
+
+impl<'b> LoadCommandThread<'b> {
+    pub fn get_size(&self) -> u32 {
+        self.buffer.len() as u32
+    }
+
+    pub fn new(buffer: &'b [u8]) -> Self {
+        Self { buffer }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct LoadCommandMinimumOSVersion {
     pub platform_type: u32,
     pub minimum_os_version: u32,
@@ -465,6 +472,9 @@ pub enum SharedLoadCommand<'b> {
     LinkedIt(LoadCommandLinkedIt),
     Dylinker(LoadCommandDylinker<'b>),
     SourceVersion(LoadCommandSourceVersion),
+    TwoLevelHints(LoadCommandTwoLevelHints),
+    Thread(LoadCommandThread<'b>),
+    UnixThread(LoadCommandThread<'b>),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -502,6 +512,11 @@ impl<'b> SharedLoadCommand<'b> {
             Self::SourceVersion(_) => {
                 LoadCommandSourceVersion::BUFFER_SIZE as u32
             }
+            Self::TwoLevelHints(_) => {
+                LoadCommandTwoLevelHints::BUFFER_SIZE as u32
+            }
+            Self::Thread(c) => c.get_size(),
+            Self::UnixThread(c) => c.get_size(),
         }
     }
 
@@ -516,6 +531,15 @@ impl<'b> SharedLoadCommand<'b> {
                     .map(Self::LinkLibrary)
                     .map_err(|e| e.into())
             }
+            4 => Ok(Self::Thread(LoadCommandThread::new(buffer))),
+            5 => Ok(Self::UnixThread(LoadCommandThread::new(buffer))),
+            22 => buffer
+                .try_into()
+                .map_err(|_| ParseError::EOF)
+                .map(|command_buffer| {
+                    LoadCommandTwoLevelHints::new(byte_order, command_buffer)
+                })
+                .map(Self::TwoLevelHints),
             42 => buffer
                 .try_into()
                 .map_err(|_| ParseError::EOF)
@@ -523,10 +547,11 @@ impl<'b> SharedLoadCommand<'b> {
                     LoadCommandSourceVersion::new(byte_order, command_buffer)
                 })
                 .map(Self::SourceVersion),
-            14 | 15 | 29 | 38 | 39 | 41 => Ok(Self::Dylinker(
-                LoadCommandDylinker::new(command_type, buffer),
-            )),
-            0x80000034 | 0x80000033 => buffer
+            14 | 15 | 39 => Ok(Self::Dylinker(LoadCommandDylinker::new(
+                command_type,
+                buffer,
+            ))),
+            0x80000034 | 0x80000033 | 43 | 41 | 30 | 38 | 29 => buffer
                 .try_into()
                 .map_err(|_| ParseError::EOF)
                 .map(|command_buffer| {
@@ -603,8 +628,9 @@ impl<'b> SharedLoadCommand<'b> {
 
 pub trait IFile<'b> {
     fn get_byte_order(&self) -> ByteOrder;
-    fn get_header(&self) -> &Header;
     fn get_rest_of_the_buffer(&self) -> &'b [u8];
+    fn get_load_commands_count(&self) -> u32;
+    fn get_load_commands_size(&self) -> u32;
 }
 
 pub trait ILoadCommand<'b>: Sized + std::fmt::Debug {
@@ -642,32 +668,39 @@ impl<'f, 'b, TFile: IFile<'b>, TLoadCommand: ILoadCommand<'b>> Iterator
     type Item = Result<TLoadCommand, ParseError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.count == self.file.get_header().load_commands_count {
-            assert!(
-                self.offset as u32 == self.file.get_header().load_commands_size
-            );
+        if self.count == self.file.get_load_commands_count() {
+            assert!(self.offset as u32 == self.file.get_load_commands_size());
             return None;
         };
-        let Some(buffer) = &self.file.get_rest_of_the_buffer().get(
-            self.offset..self.file.get_header().load_commands_size as usize,
-        ) else {
-            self.count = self.file.get_header().load_commands_count;
+        let Some(buffer) = &self
+            .file
+            .get_rest_of_the_buffer()
+            .get(self.offset..self.file.get_load_commands_size() as usize)
+        else {
+            self.count = self.file.get_load_commands_count();
             return Some(Err(ParseError::EOF));
         };
         let Some((header_buffer, rest_of_the_buffer)) = buffer
             .split_first_chunk::<{ std::mem::size_of::<LoadCommandHeader>() }>(
             )
         else {
-            self.count = self.file.get_header().load_commands_count;
+            self.count = self.file.get_load_commands_count();
             return Some(Err(ParseError::EOF));
         };
         let command_header =
             LoadCommandHeader::new(self.file.get_byte_order(), header_buffer);
-        let Some(command_buffer) = rest_of_the_buffer.get(
-            0..command_header.command_size as usize
-                - std::mem::size_of::<LoadCommandHeader>(),
-        ) else {
-            self.count = self.file.get_header().load_commands_count;
+        if command_header.command_size
+            <= std::mem::size_of::<LoadCommandHeader>() as u32
+        {
+            self.count = self.file.get_load_commands_count();
+            return Some(Err(ParseError::EOF));
+        }
+        let command_buffer_size = command_header.command_size as usize
+            - std::mem::size_of::<LoadCommandHeader>();
+        let Some(command_buffer) =
+            rest_of_the_buffer.get(0..command_buffer_size)
+        else {
+            self.count = self.file.get_load_commands_count();
             return Some(Err(ParseError::EOF));
         };
         self.count += 1;
