@@ -141,10 +141,10 @@ impl Section {
 }
 
 pub struct SegmentSectionIterator<'b> {
-    sections_count: u32,
-    buffer: &'b [u8],
-    count: u32,
-    byte_order: ByteOrder,
+    pub sections_count: u32,
+    pub buffer: &'b [u8],
+    pub count: u32,
+    pub byte_order: ByteOrder,
 }
 
 impl<'b> Iterator for SegmentSectionIterator<'b> {
