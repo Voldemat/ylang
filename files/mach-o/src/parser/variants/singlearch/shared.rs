@@ -1,7 +1,4 @@
-use crate::parser::{
-    ByteOrder, read_u32_with_byte_order, read_u64_with_byte_order,
-    variants::shared::EOF,
-};
+use crate::parser::{shared::ByteOrder, variants::shared::EOF};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LoadCommandHeader {
@@ -16,14 +13,8 @@ impl LoadCommandHeader {
         buffer: &[u8; std::mem::size_of::<LoadCommandHeader>()],
     ) -> Self {
         Self {
-            command_type: read_u32_with_byte_order(
-                byte_order,
-                buffer[0..4].try_into().unwrap(),
-            ),
-            command_size: read_u32_with_byte_order(
-                byte_order,
-                buffer[4..8].try_into().unwrap(),
-            ),
+            command_type: byte_order.read_u32(buffer[0..4].try_into().unwrap()),
+            command_size: byte_order.read_u32(buffer[4..8].try_into().unwrap()),
         }
     }
 }
@@ -46,14 +37,8 @@ impl LoadCommandLinkedIt {
     ) -> Self {
         Self {
             command_type,
-            file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer[0..4].try_into().unwrap(),
-            ),
-            datasize: read_u32_with_byte_order(
-                byte_order,
-                buffer[4..8].try_into().unwrap(),
-            ),
+            file_offset: byte_order.read_u32(buffer[0..4].try_into().unwrap()),
+            datasize: byte_order.read_u32(buffer[4..8].try_into().unwrap()),
         }
     }
 }
@@ -90,7 +75,7 @@ impl LoadCommandSourceVersion {
         buffer: &[u8; Self::BUFFER_SIZE],
     ) -> Self {
         Self {
-            version: read_u64_with_byte_order(byte_order, *buffer),
+            version: byte_order.read_u64(*buffer),
         }
     }
 }
@@ -111,20 +96,16 @@ impl<'b> LoadCommandLinkLibrary<'b> {
 
     pub fn parse(byte_order: ByteOrder, buffer: &'b [u8]) -> Result<Self, EOF> {
         Ok(Self {
-            string_offset: read_u32_with_byte_order(
-                byte_order,
+            string_offset: byte_order.read_u32(
                 buffer.get(0..4).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
             ),
-            timestamp: read_u32_with_byte_order(
-                byte_order,
+            timestamp: byte_order.read_u32(
                 buffer.get(4..8).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
             ),
-            current_version: read_u32_with_byte_order(
-                byte_order,
+            current_version: byte_order.read_u32(
                 buffer.get(8..12).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
             ),
-            compatible_version: read_u32_with_byte_order(
-                byte_order,
+            compatible_version: byte_order.read_u32(
                 buffer.get(12..16).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
             ),
             file_path: buffer.get(16..).ok_or(EOF)?,
@@ -148,22 +129,14 @@ impl LoadCommandSymbolTable {
         buffer: &[u8; Self::BUFFER_SIZE],
     ) -> Self {
         Self {
-            symbols_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(0..4).unwrap().try_into().unwrap(),
-            ),
-            symbols_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(4..8).unwrap().try_into().unwrap(),
-            ),
-            string_table_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(8..12).unwrap().try_into().unwrap(),
-            ),
-            string_table_size: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(12..16).unwrap().try_into().unwrap(),
-            ),
+            symbols_offset: byte_order
+                .read_u32(buffer.get(0..4).unwrap().try_into().unwrap()),
+            symbols_count: byte_order
+                .read_u32(buffer.get(4..8).unwrap().try_into().unwrap()),
+            string_table_offset: byte_order
+                .read_u32(buffer.get(8..12).unwrap().try_into().unwrap()),
+            string_table_size: byte_order
+                .read_u32(buffer.get(12..16).unwrap().try_into().unwrap()),
         }
     }
 }
@@ -198,78 +171,42 @@ impl LoadCommandSymbolTableInformation {
         buffer: &[u8; Self::BUFFER_SIZE],
     ) -> Self {
         Self {
-            local_symbols_index: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(0..4).unwrap().try_into().unwrap(),
-            ),
-            local_symbols_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(4..8).unwrap().try_into().unwrap(),
-            ),
-            external_symbols_index: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(8..12).unwrap().try_into().unwrap(),
-            ),
-            external_symbols_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(12..16).unwrap().try_into().unwrap(),
-            ),
-            undefined_symbols_index: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(16..20).unwrap().try_into().unwrap(),
-            ),
-            undefined_symbols_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(20..24).unwrap().try_into().unwrap(),
-            ),
-            content_table_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(24..28).unwrap().try_into().unwrap(),
-            ),
-            content_table_entries_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(28..32).unwrap().try_into().unwrap(),
-            ),
-            module_table_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(32..36).unwrap().try_into().unwrap(),
-            ),
-            module_table_entries_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(36..40).unwrap().try_into().unwrap(),
-            ),
-            referenced_symbol_table_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(40..44).unwrap().try_into().unwrap(),
-            ),
-            referenced_symbol_table_entries_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(44..48).unwrap().try_into().unwrap(),
-            ),
-            indirect_table_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(48..52).unwrap().try_into().unwrap(),
-            ),
-            indirect_table_entries_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(52..56).unwrap().try_into().unwrap(),
-            ),
-            external_relocation_table_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(56..60).unwrap().try_into().unwrap(),
-            ),
-            external_relocation_table_entries_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(60..64).unwrap().try_into().unwrap(),
-            ),
-            local_relocation_table_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(64..68).unwrap().try_into().unwrap(),
-            ),
-            local_relocation_table_entries_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(68..72).unwrap().try_into().unwrap(),
-            ),
+            local_symbols_index: byte_order
+                .read_u32(buffer.get(0..4).unwrap().try_into().unwrap()),
+            local_symbols_count: byte_order
+                .read_u32(buffer.get(4..8).unwrap().try_into().unwrap()),
+            external_symbols_index: byte_order
+                .read_u32(buffer.get(8..12).unwrap().try_into().unwrap()),
+            external_symbols_count: byte_order
+                .read_u32(buffer.get(12..16).unwrap().try_into().unwrap()),
+            undefined_symbols_index: byte_order
+                .read_u32(buffer.get(16..20).unwrap().try_into().unwrap()),
+            undefined_symbols_count: byte_order
+                .read_u32(buffer.get(20..24).unwrap().try_into().unwrap()),
+            content_table_offset: byte_order
+                .read_u32(buffer.get(24..28).unwrap().try_into().unwrap()),
+            content_table_entries_count: byte_order
+                .read_u32(buffer.get(28..32).unwrap().try_into().unwrap()),
+            module_table_offset: byte_order
+                .read_u32(buffer.get(32..36).unwrap().try_into().unwrap()),
+            module_table_entries_count: byte_order
+                .read_u32(buffer.get(36..40).unwrap().try_into().unwrap()),
+            referenced_symbol_table_offset: byte_order
+                .read_u32(buffer.get(40..44).unwrap().try_into().unwrap()),
+            referenced_symbol_table_entries_count: byte_order
+                .read_u32(buffer.get(44..48).unwrap().try_into().unwrap()),
+            indirect_table_offset: byte_order
+                .read_u32(buffer.get(48..52).unwrap().try_into().unwrap()),
+            indirect_table_entries_count: byte_order
+                .read_u32(buffer.get(52..56).unwrap().try_into().unwrap()),
+            external_relocation_table_offset: byte_order
+                .read_u32(buffer.get(56..60).unwrap().try_into().unwrap()),
+            external_relocation_table_entries_count: byte_order
+                .read_u32(buffer.get(60..64).unwrap().try_into().unwrap()),
+            local_relocation_table_offset: byte_order
+                .read_u32(buffer.get(64..68).unwrap().try_into().unwrap()),
+            local_relocation_table_entries_count: byte_order
+                .read_u32(buffer.get(68..72).unwrap().try_into().unwrap()),
         }
     }
 }
@@ -297,46 +234,26 @@ impl LoadCommandCompressedLinkEditTable {
         buffer: &[u8; Self::BUFFER_SIZE],
     ) -> Self {
         Self {
-            rebase_file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(0..4).unwrap().try_into().unwrap(),
-            ),
-            rebase_size: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(4..8).unwrap().try_into().unwrap(),
-            ),
-            bind_file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(8..12).unwrap().try_into().unwrap(),
-            ),
-            bind_size: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(12..16).unwrap().try_into().unwrap(),
-            ),
-            weak_bind_file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(16..20).unwrap().try_into().unwrap(),
-            ),
-            weak_bind_size: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(20..24).unwrap().try_into().unwrap(),
-            ),
-            lazy_bind_file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(24..28).unwrap().try_into().unwrap(),
-            ),
-            lazy_bind_size: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(28..32).unwrap().try_into().unwrap(),
-            ),
-            export_file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(32..36).unwrap().try_into().unwrap(),
-            ),
-            export_size: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(36..40).unwrap().try_into().unwrap(),
-            ),
+            rebase_file_offset: byte_order
+                .read_u32(buffer.get(0..4).unwrap().try_into().unwrap()),
+            rebase_size: byte_order
+                .read_u32(buffer.get(4..8).unwrap().try_into().unwrap()),
+            bind_file_offset: byte_order
+                .read_u32(buffer.get(8..12).unwrap().try_into().unwrap()),
+            bind_size: byte_order
+                .read_u32(buffer.get(12..16).unwrap().try_into().unwrap()),
+            weak_bind_file_offset: byte_order
+                .read_u32(buffer.get(16..20).unwrap().try_into().unwrap()),
+            weak_bind_size: byte_order
+                .read_u32(buffer.get(20..24).unwrap().try_into().unwrap()),
+            lazy_bind_file_offset: byte_order
+                .read_u32(buffer.get(24..28).unwrap().try_into().unwrap()),
+            lazy_bind_size: byte_order
+                .read_u32(buffer.get(28..32).unwrap().try_into().unwrap()),
+            export_file_offset: byte_order
+                .read_u32(buffer.get(32..36).unwrap().try_into().unwrap()),
+            export_size: byte_order
+                .read_u32(buffer.get(36..40).unwrap().try_into().unwrap()),
         }
     }
 }
@@ -356,14 +273,10 @@ impl LoadCommandMainEntryPoint {
         buffer: &[u8; Self::BUFFER_SIZE],
     ) -> Self {
         Self {
-            address: read_u64_with_byte_order(
-                byte_order,
-                buffer.get(0..8).unwrap().try_into().unwrap(),
-            ),
-            stack_memory_size: read_u64_with_byte_order(
-                byte_order,
-                buffer.get(8..16).unwrap().try_into().unwrap(),
-            ),
+            address: byte_order
+                .read_u64(buffer.get(0..8).unwrap().try_into().unwrap()),
+            stack_memory_size: byte_order
+                .read_u64(buffer.get(8..16).unwrap().try_into().unwrap()),
         }
     }
 }
@@ -396,14 +309,10 @@ impl LoadCommandTwoLevelHints {
         buffer: &[u8; Self::BUFFER_SIZE],
     ) -> Self {
         Self {
-            file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(0..4).unwrap().try_into().unwrap(),
-            ),
-            hints_count: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(4..8).unwrap().try_into().unwrap(),
-            ),
+            file_offset: byte_order
+                .read_u32(buffer.get(0..4).unwrap().try_into().unwrap()),
+            hints_count: byte_order
+                .read_u32(buffer.get(4..8).unwrap().try_into().unwrap()),
         }
     }
 }
@@ -425,22 +334,14 @@ impl LoadCommandMinimumOSVersion {
         buffer: &[u8; Self::BUFFER_SIZE],
     ) -> Self {
         Self {
-            platform_type: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(0..4).unwrap().try_into().unwrap(),
-            ),
-            minimum_os_version: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(4..8).unwrap().try_into().unwrap(),
-            ),
-            sdk_version: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(8..12).unwrap().try_into().unwrap(),
-            ),
-            number_of_tools_used: read_u32_with_byte_order(
-                byte_order,
-                buffer.get(12..16).unwrap().try_into().unwrap(),
-            ),
+            platform_type: byte_order
+                .read_u32(buffer.get(0..4).unwrap().try_into().unwrap()),
+            minimum_os_version: byte_order
+                .read_u32(buffer.get(4..8).unwrap().try_into().unwrap()),
+            sdk_version: byte_order
+                .read_u32(buffer.get(8..12).unwrap().try_into().unwrap()),
+            number_of_tools_used: byte_order
+                .read_u32(buffer.get(12..16).unwrap().try_into().unwrap()),
         }
     }
 }

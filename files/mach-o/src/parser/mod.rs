@@ -1,4 +1,6 @@
+pub mod shared;
 pub mod variants;
+pub use shared::ByteOrder;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum MachOFile<'b> {
@@ -15,42 +17,6 @@ pub enum ParseError {
 impl From<variants::shared::EOF> for ParseError {
     fn from(_: variants::shared::EOF) -> Self {
         Self::EOF
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ByteOrder {
-    BigEndian,
-    LittleEndian,
-}
-
-impl ByteOrder {
-    pub const fn host_order() -> Self {
-        cfg_select! {
-            target_endian = "little" => Self::LittleEndian,
-            target_endian = "big" => Self::BigEndian,
-            _ => compile_error!("Unknown host endiannes")
-        }
-    }
-}
-
-pub const fn read_u32_with_byte_order(
-    byte_order: ByteOrder,
-    buffer: [u8; 4],
-) -> u32 {
-    match byte_order {
-        ByteOrder::BigEndian => u32::from_be_bytes(buffer),
-        ByteOrder::LittleEndian => u32::from_le_bytes(buffer),
-    }
-}
-
-pub const fn read_u64_with_byte_order(
-    byte_order: ByteOrder,
-    buffer: [u8; 8],
-) -> u64 {
-    match byte_order {
-        ByteOrder::BigEndian => u64::from_be_bytes(buffer),
-        ByteOrder::LittleEndian => u64::from_le_bytes(buffer),
     }
 }
 

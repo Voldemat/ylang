@@ -1,5 +1,5 @@
 use crate::{
-    parser::{ByteOrder, read_u32_with_byte_order, variants::shared::EOF},
+    parser::{shared::ByteOrder, variants::shared::EOF},
     shared::AsciiString,
 };
 
@@ -27,14 +27,12 @@ impl Header {
             unreachable!()
         };
         Self {
-            cpu_type: read_u32_with_byte_order(byte_order, chunks[0]),
-            cpu_subtype: read_u32_with_byte_order(byte_order, chunks[1]),
-            file_type: read_u32_with_byte_order(byte_order, chunks[2]),
-            load_commands_count: read_u32_with_byte_order(
-                byte_order, chunks[3],
-            ),
-            load_commands_size: read_u32_with_byte_order(byte_order, chunks[4]),
-            flags: read_u32_with_byte_order(byte_order, chunks[5]),
+            cpu_type: byte_order.read_u32(chunks[0]),
+            cpu_subtype: byte_order.read_u32(chunks[1]),
+            file_type: byte_order.read_u32(chunks[2]),
+            load_commands_count: byte_order.read_u32(chunks[3]),
+            load_commands_size: byte_order.read_u32(chunks[4]),
+            flags: byte_order.read_u32(chunks[5]),
         }
     }
 }
@@ -94,42 +92,18 @@ impl Section {
         Self {
             section_name: AsciiString(buffer[0..16].try_into().unwrap()),
             segment_name: AsciiString(buffer[16..32].try_into().unwrap()),
-            address: read_u32_with_byte_order(
-                byte_order,
-                buffer[32..36].try_into().unwrap(),
-            ),
-            size: read_u32_with_byte_order(
-                byte_order,
-                buffer[36..40].try_into().unwrap(),
-            ),
-            file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer[40..44].try_into().unwrap(),
-            ),
-            alignment: read_u32_with_byte_order(
-                byte_order,
-                buffer[44..48].try_into().unwrap(),
-            ),
-            relocation_entries_file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer[48..52].try_into().unwrap(),
-            ),
-            relocation_entries_count: read_u32_with_byte_order(
-                byte_order,
-                buffer[52..56].try_into().unwrap(),
-            ),
-            flags: read_u32_with_byte_order(
-                byte_order,
-                buffer[56..60].try_into().unwrap(),
-            ),
-            _reserved1: read_u32_with_byte_order(
-                byte_order,
-                buffer[60..64].try_into().unwrap(),
-            ),
-            _reserved2: read_u32_with_byte_order(
-                byte_order,
-                buffer[64..68].try_into().unwrap(),
-            ),
+            address: byte_order.read_u32(buffer[32..36].try_into().unwrap()),
+            size: byte_order.read_u32(buffer[36..40].try_into().unwrap()),
+            file_offset: byte_order
+                .read_u32(buffer[40..44].try_into().unwrap()),
+            alignment: byte_order.read_u32(buffer[44..48].try_into().unwrap()),
+            relocation_entries_file_offset: byte_order
+                .read_u32(buffer[48..52].try_into().unwrap()),
+            relocation_entries_count: byte_order
+                .read_u32(buffer[52..56].try_into().unwrap()),
+            flags: byte_order.read_u32(buffer[56..60].try_into().unwrap()),
+            _reserved1: byte_order.read_u32(buffer[60..64].try_into().unwrap()),
+            _reserved2: byte_order.read_u32(buffer[64..68].try_into().unwrap()),
         }
     }
 }
@@ -186,10 +160,10 @@ impl<'b> LoadCommandSegment<'b> {
         byte_order: ByteOrder,
     ) -> impl Iterator<Item = Result<Section, EOF>> {
         SegmentSectionIterator {
+            byte_order,
             sections_count: self.sections_count,
             buffer: self.sections_buffer,
             count: 0,
-            byte_order,
         }
     }
 
@@ -197,38 +171,19 @@ impl<'b> LoadCommandSegment<'b> {
     pub fn new(byte_order: ByteOrder, buffer: &'b [u8]) -> Self {
         Self {
             segment_name: AsciiString(buffer[0..16].try_into().unwrap()),
-            address: read_u32_with_byte_order(
-                byte_order,
-                buffer[16..20].try_into().unwrap(),
-            ),
-            address_size: read_u32_with_byte_order(
-                byte_order,
-                buffer[20..24].try_into().unwrap(),
-            ),
-            file_offset: read_u32_with_byte_order(
-                byte_order,
-                buffer[24..28].try_into().unwrap(),
-            ),
-            size: read_u32_with_byte_order(
-                byte_order,
-                buffer[28..32].try_into().unwrap(),
-            ),
-            maximum_virtual_memory_protections: read_u32_with_byte_order(
-                byte_order,
-                buffer[32..36].try_into().unwrap(),
-            ),
-            initial_virtual_memory_protections: read_u32_with_byte_order(
-                byte_order,
-                buffer[36..40].try_into().unwrap(),
-            ),
-            sections_count: read_u32_with_byte_order(
-                byte_order,
-                buffer[40..44].try_into().unwrap(),
-            ),
-            flags: read_u32_with_byte_order(
-                byte_order,
-                buffer[44..48].try_into().unwrap(),
-            ),
+            address: byte_order.read_u32(buffer[16..20].try_into().unwrap()),
+            address_size: byte_order
+                .read_u32(buffer[20..24].try_into().unwrap()),
+            file_offset: byte_order
+                .read_u32(buffer[24..28].try_into().unwrap()),
+            size: byte_order.read_u32(buffer[28..32].try_into().unwrap()),
+            maximum_virtual_memory_protections: byte_order
+                .read_u32(buffer[32..36].try_into().unwrap()),
+            initial_virtual_memory_protections: byte_order
+                .read_u32(buffer[36..40].try_into().unwrap()),
+            sections_count: byte_order
+                .read_u32(buffer[40..44].try_into().unwrap()),
+            flags: byte_order.read_u32(buffer[44..48].try_into().unwrap()),
             sections_buffer: &buffer[48..],
         }
     }

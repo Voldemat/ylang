@@ -1,15 +1,4 @@
-use super::shared::EOF;
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct Header {
-    pub binaries_count: u32,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct File<'b> {
-    pub header: Header,
-    pub rest_of_the_buffer: &'b [u8],
-}
+use crate::parser::variants::shared::EOF;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct EntryHeader {
@@ -38,9 +27,19 @@ impl EntryHeader {
 }
 
 pub struct EntryHeaderIterator<'b> {
-    pub buffer: &'b [u8],
-    pub binaries_count: u32,
-    pub count: u32,
+    buffer: &'b [u8],
+    binaries_count: u32,
+    count: u32,
+}
+
+impl<'b> EntryHeaderIterator<'b> {
+    pub fn new(buffer: &'b [u8], binaries_count: u32) -> Self {
+        Self {
+            buffer,
+            binaries_count,
+            count: 0,
+        }
+    }
 }
 
 impl<'b> Iterator for EntryHeaderIterator<'b> {
@@ -61,33 +60,5 @@ impl<'b> Iterator for EntryHeaderIterator<'b> {
         };
         self.count += 1;
         Some(Ok(EntryHeader::new(entry_header_buffer)))
-    }
-}
-
-impl<'b> File<'b> {
-    pub const MAGIC_VALUE_BE: u32 = 0xcafebabe;
-    pub fn parse(buffer: &'b [u8]) -> Result<Self, EOF> {
-        let (header_buffer, rest_of_the_buffer) = buffer
-            .split_at_checked(std::mem::size_of::<Header>())
-            .ok_or(EOF)?;
-        let header_buffer: [u8; std::mem::size_of::<Header>()] =
-            header_buffer.try_into().map_err(|_| EOF)?;
-        let header = Header {
-            binaries_count: u32::from_be_bytes(header_buffer),
-        };
-        Ok(Self {
-            header,
-            rest_of_the_buffer,
-        })
-    }
-
-    pub fn get_entry_headers(
-        &self,
-    ) -> impl Iterator<Item = Result<EntryHeader, EOF>> {
-        EntryHeaderIterator {
-            buffer: self.rest_of_the_buffer,
-            binaries_count: self.header.binaries_count,
-            count: 0,
-        }
     }
 }

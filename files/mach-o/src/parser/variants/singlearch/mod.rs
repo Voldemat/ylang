@@ -1,4 +1,4 @@
-use crate::parser::{ByteOrder, ParseError};
+use crate::parser::{ParseError, shared::ByteOrder};
 
 pub mod b32;
 pub mod b64;
