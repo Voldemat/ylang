@@ -409,21 +409,6 @@ impl LoadCommandTwoLevelHints {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LoadCommandThread<'b> {
-    pub buffer: &'b [u8],
-}
-
-impl<'b> LoadCommandThread<'b> {
-    pub fn get_size(&self) -> u32 {
-        self.buffer.len() as u32
-    }
-
-    pub fn new(buffer: &'b [u8]) -> Self {
-        Self { buffer }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
 pub struct LoadCommandMinimumOSVersion {
     pub platform_type: u32,
     pub minimum_os_version: u32,
@@ -473,8 +458,9 @@ pub enum SharedLoadCommand<'b> {
     Dylinker(LoadCommandDylinker<'b>),
     SourceVersion(LoadCommandSourceVersion),
     TwoLevelHints(LoadCommandTwoLevelHints),
-    Thread(LoadCommandThread<'b>),
-    UnixThread(LoadCommandThread<'b>),
+    Thread(&'b [u8]),
+    UnixThread(&'b [u8]),
+    SubClient(&'b [u8])
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -515,8 +501,9 @@ impl<'b> SharedLoadCommand<'b> {
             Self::TwoLevelHints(_) => {
                 LoadCommandTwoLevelHints::BUFFER_SIZE as u32
             }
-            Self::Thread(c) => c.get_size(),
-            Self::UnixThread(c) => c.get_size(),
+            Self::Thread(c) => c.len() as u32,
+            Self::UnixThread(c) => c.len() as u32,
+            Self::SubClient(c) => c.len() as u32
         }
     }
 
@@ -531,8 +518,9 @@ impl<'b> SharedLoadCommand<'b> {
                     .map(Self::LinkLibrary)
                     .map_err(|e| e.into())
             }
-            4 => Ok(Self::Thread(LoadCommandThread::new(buffer))),
-            5 => Ok(Self::UnixThread(LoadCommandThread::new(buffer))),
+            4 => Ok(Self::Thread(buffer)),
+            5 => Ok(Self::UnixThread(buffer)),
+            20 => Ok(Self::SubClient(buffer)),
             22 => buffer
                 .try_into()
                 .map_err(|_| ParseError::EOF)

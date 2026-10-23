@@ -9,7 +9,10 @@ pub fn test_64_bit_little_endian_file() {
     let buffer: Vec<u8> = std::fs::read(path).unwrap();
     let general_file = parser::MachOFile::parse(&buffer).unwrap();
     assert_eq!(general_file.get_byte_order(), ByteOrder::LittleEndian);
-    let parser::MachOFile::B64(file) = general_file else {
+    let parser::MachOFile::Singlearch(parser::variants::singlearch::File::B64(
+        file,
+    )) = general_file
+    else {
         panic!("Expected 64 bit file");
     };
     assert_eq!(file.byte_order, ByteOrder::LittleEndian);

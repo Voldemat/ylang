@@ -9,7 +9,10 @@ pub fn test_32_bit_little_endian_file() {
     let buffer: Vec<u8> = std::fs::read(path).unwrap();
     let general_file = parser::MachOFile::parse(&buffer).unwrap();
     assert_eq!(general_file.get_byte_order(), ByteOrder::LittleEndian);
-    let parser::MachOFile::B32(file) = general_file else {
+    let parser::MachOFile::Singlearch(parser::variants::singlearch::File::B32(
+        file,
+    )) = general_file
+    else {
         panic!("Expected 32 bit file");
     };
     assert_eq!(file.byte_order, ByteOrder::LittleEndian);

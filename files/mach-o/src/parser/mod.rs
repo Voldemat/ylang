@@ -2,8 +2,7 @@ pub mod variants;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum MachOFile<'b> {
-    B32(variants::singlearch::b32::File<'b>),
-    B64(variants::singlearch::b64::File<'b>),
+    Singlearch(variants::singlearch::File<'b>),
     MultiArch(variants::multiarch::File<'b>),
 }
 
@@ -58,29 +57,8 @@ pub const fn read_u64_with_byte_order(
 impl<'b> MachOFile<'b> {
     pub fn get_byte_order(&self) -> ByteOrder {
         match self {
-            Self::B64(f) => f.byte_order,
-            Self::B32(f) => f.byte_order,
+            Self::Singlearch(f) => f.get_byte_order(),
             Self::MultiArch(_) => ByteOrder::BigEndian,
-        }
-    }
-
-    pub fn parse_with_magic(
-        magic: u32,
-        byte_order: ByteOrder,
-        buffer: &'b [u8],
-    ) -> Result<Self, ParseError> {
-        match magic {
-            0xfeedface => {
-                variants::singlearch::b32::File::parse(byte_order, buffer)
-                    .map(MachOFile::B32)
-                    .map_err(|e| e.into())
-            }
-            0xfeedfacf => {
-                variants::singlearch::b64::File::parse(byte_order, buffer)
-                    .map(MachOFile::B64)
-                    .map_err(|e| e.into())
-            }
-            _ => Err(ParseError::UnknownMagicValue),
         }
     }
 
@@ -94,21 +72,10 @@ impl<'b> MachOFile<'b> {
                 .map(MachOFile::MultiArch)
                 .map_err(|e| e.into());
         };
-        Self::parse_with_magic(
+        variants::singlearch::File::parse_with_big_endian_magic_first(
             magic_big_endian,
-            ByteOrder::BigEndian,
             rest_of_the_buffer,
         )
-        .or_else(|e| {
-            if ParseError::UnknownMagicValue == e {
-                Self::parse_with_magic(
-                    u32::from_le_bytes(magic_buffer),
-                    ByteOrder::LittleEndian,
-                    rest_of_the_buffer,
-                )
-            } else {
-                Err(e)
-            }
-        })
+        .map(Self::Singlearch)
     }
 }
