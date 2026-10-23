@@ -1,7 +1,8 @@
 use crate::parser::{
     ByteOrder,
     variants::singlearch::shared::{
-        ILoadCommand, ParseError, SharedLoadCommand,
+        iload_command::ILoadCommand, load_command::SharedLoadCommand,
+        parse_error::ParseError,
     },
 };
 

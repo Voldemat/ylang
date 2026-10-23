@@ -3,7 +3,9 @@ pub mod load_command;
 
 use crate::parser::{shared::ByteOrder, variants::shared::EOF};
 
-use super::shared::{IFile, LoadCommandIterator, ParseError};
+use super::shared::{
+    ifile::IFile, iload_command::LoadCommandIterator, parse_error::ParseError,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct File<'b> {
