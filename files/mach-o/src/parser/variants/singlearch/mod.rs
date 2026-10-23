@@ -24,10 +24,10 @@ impl<'b> File<'b> {
         buffer: &'b [u8],
     ) -> Result<Self, ParseError> {
         match magic {
-            0xfeedface => b32::File::parse(byte_order, buffer)
+            b32::File::MAGIC_VALUE => b32::File::parse(byte_order, buffer)
                 .map(File::B32)
                 .map_err(|e| e.into()),
-            0xfeedfacf => b64::File::parse(byte_order, buffer)
+            b64::File::MAGIC_VALUE => b64::File::parse(byte_order, buffer)
                 .map(File::B64)
                 .map_err(|e| e.into()),
             _ => Err(ParseError::UnknownMagicValue),
@@ -39,13 +39,10 @@ impl<'b> File<'b> {
         buffer: &'b [u8],
     ) -> Result<Self, ParseError> {
         let magic_big_endian = u32::from_be_bytes(magic_buffer);
-        Self::parse_with_big_endian_magic_first(
-            magic_big_endian,
-            buffer
-        )
+        Self::try_parse_both_orders_from_be(magic_big_endian, buffer)
     }
 
-    pub fn parse_with_big_endian_magic_first(
+    pub fn try_parse_both_orders_from_be(
         magic_big_endian: u32,
         buffer: &'b [u8],
     ) -> Result<Self, ParseError> {

@@ -67,12 +67,12 @@ impl<'b> MachOFile<'b> {
         let magic_buffer =
             magic_buffer.try_into().map_err(|_| ParseError::EOF)?;
         let magic_big_endian = u32::from_be_bytes(magic_buffer);
-        if magic_big_endian == 0xcafebabe {
+        if magic_big_endian == variants::multiarch::File::MAGIC_VALUE_BE {
             return variants::multiarch::File::parse(rest_of_the_buffer)
                 .map(MachOFile::MultiArch)
                 .map_err(|e| e.into());
         };
-        variants::singlearch::File::parse_with_big_endian_magic_first(
+        variants::singlearch::File::try_parse_both_orders_from_be(
             magic_big_endian,
             rest_of_the_buffer,
         )

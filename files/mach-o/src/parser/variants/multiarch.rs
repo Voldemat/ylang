@@ -65,6 +65,7 @@ impl<'b> Iterator for EntryHeaderIterator<'b> {
 }
 
 impl<'b> File<'b> {
+    pub const MAGIC_VALUE_BE: u32 = 0xcafebabe;
     pub fn parse(buffer: &'b [u8]) -> Result<Self, EOF> {
         let (header_buffer, rest_of_the_buffer) = buffer
             .split_at_checked(std::mem::size_of::<Header>())

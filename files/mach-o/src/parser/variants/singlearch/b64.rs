@@ -51,6 +51,10 @@ pub struct File<'b> {
     pub rest_of_the_buffer: &'b [u8],
 }
 
+impl<'b> File<'b> {
+    pub const MAGIC_VALUE: u32 = 0xfeedfacf;
+}
+
 impl<'b> IFile<'b> for File<'b> {
     fn get_byte_order(&self) -> ByteOrder {
         self.byte_order

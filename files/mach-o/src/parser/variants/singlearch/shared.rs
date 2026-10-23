@@ -460,7 +460,7 @@ pub enum SharedLoadCommand<'b> {
     TwoLevelHints(LoadCommandTwoLevelHints),
     Thread(&'b [u8]),
     UnixThread(&'b [u8]),
-    SubClient(&'b [u8])
+    SubClient(&'b [u8]),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -503,7 +503,7 @@ impl<'b> SharedLoadCommand<'b> {
             }
             Self::Thread(c) => c.len() as u32,
             Self::UnixThread(c) => c.len() as u32,
-            Self::SubClient(c) => c.len() as u32
+            Self::SubClient(c) => c.len() as u32,
         }
     }
 
