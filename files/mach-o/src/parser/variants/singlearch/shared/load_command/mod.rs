@@ -167,7 +167,7 @@ impl<'b> SharedLoadCommand<'b> {
                 .ok_or(ParseError::EOF)
                 .and_then(|b| b.try_into().map_err(|_| ParseError::EOF))
                 .map(|command_buffer| {
-                    entry_point::LoadCommandEntryPoint::parse(byte_order, command_buffer)
+                    entry_point::LoadCommandEntryPoint::new(byte_order, command_buffer)
                 })
                 .map(Self::MainEntryPoint),
             0x0000001B => buffer

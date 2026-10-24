@@ -20,6 +20,7 @@ pub struct LoadCommandSegment<'b> {
 }
 
 impl<'b> LoadCommandSegment<'b> {
+    pub const COMMAND_TYPE: u32 = 0x00000019;
     pub fn get_size(&self) -> u32 {
         (std::mem::size_of::<AsciiString<16>>()
             + std::mem::size_of::<u64>() * 6
