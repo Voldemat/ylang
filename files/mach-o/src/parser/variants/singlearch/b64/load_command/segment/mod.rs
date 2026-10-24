@@ -1,6 +1,6 @@
 use crate::{
-    parser::{ByteOrder, variants::shared::EOF},
-    shared::AsciiString,
+    parser::ByteOrder,
+    shared::{AsciiString, EOF, FixedSizeStructIterator},
 };
 
 pub mod section;
@@ -30,10 +30,10 @@ impl<'b> LoadCommandSegment<'b> {
         &self,
         byte_order: ByteOrder,
     ) -> impl Iterator<Item = Result<section::Section, EOF>> {
-        section::SegmentSectionIterator::new(
+        FixedSizeStructIterator::new(
             byte_order,
             self.sections_buffer,
-            self.sections_count,
+            self.sections_count as usize,
         )
     }
 

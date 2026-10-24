@@ -1,6 +1,6 @@
 use crate::{
-    parser::{ByteOrder, variants::shared::EOF},
-    shared::AsciiString,
+    parser::ByteOrder,
+    shared::{AsciiString, IStaticStruct},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -20,12 +20,11 @@ pub struct Section {
 
 impl Section {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Section>();
+}
 
+impl IStaticStruct<{ Section::BUFFER_SIZE }> for Section {
     #[allow(clippy::unwrap_used)]
-    pub fn new(
-        byte_order: ByteOrder,
-        buffer: &[u8; Self::BUFFER_SIZE],
-    ) -> Self {
+    fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {
             section_name: AsciiString(buffer[0..16].try_into().unwrap()),
             segment_name: AsciiString(buffer[16..32].try_into().unwrap()),
@@ -42,49 +41,5 @@ impl Section {
             _reserved1: byte_order.read_u32(buffer[60..64].try_into().unwrap()),
             _reserved2: byte_order.read_u32(buffer[64..68].try_into().unwrap()),
         }
-    }
-}
-
-pub struct SegmentSectionIterator<'b> {
-    byte_order: ByteOrder,
-    buffer: &'b [u8],
-    sections_count: u32,
-    count: u32,
-}
-
-impl<'b> SegmentSectionIterator<'b> {
-    pub fn new(
-        byte_order: ByteOrder,
-        buffer: &'b [u8],
-        sections_count: u32,
-    ) -> Self {
-        Self {
-            byte_order,
-            buffer,
-            sections_count,
-            count: 0,
-        }
-    }
-}
-
-impl<'b> Iterator for SegmentSectionIterator<'b> {
-    type Item = Result<Section, EOF>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.count == self.sections_count {
-            return None;
-        };
-        let Some(section_buffer) = self
-            .buffer
-            .get(
-                self.count as usize * Section::BUFFER_SIZE
-                    ..(self.count as usize + 1) * Section::BUFFER_SIZE,
-            )
-            .and_then(|b| b.try_into().ok())
-        else {
-            return Some(Err(EOF));
-        };
-        self.count += 1;
-        Some(Ok(Section::new(self.byte_order, section_buffer)))
     }
 }

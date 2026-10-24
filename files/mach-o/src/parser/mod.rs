@@ -2,6 +2,8 @@ pub mod shared;
 pub mod variants;
 pub use shared::ByteOrder;
 
+use crate::shared::EOF;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum MachOFile<'b> {
     Singlearch(variants::singlearch::File<'b>),
@@ -14,8 +16,8 @@ pub enum ParseError {
     EOF,
 }
 
-impl From<variants::shared::EOF> for ParseError {
-    fn from(_: variants::shared::EOF) -> Self {
+impl From<EOF> for ParseError {
+    fn from(_: EOF) -> Self {
         Self::EOF
     }
 }

@@ -1,19 +1,21 @@
-use crate::parser::ByteOrder;
-
-use super::parse_error::ParseError;
-
+pub mod build_version;
 pub mod compressed_link_edit_table;
 pub mod dylinker;
 pub mod entry_point;
 pub mod header;
 pub mod link_library;
 pub mod linked_it;
+pub mod linker_option;
 pub mod minimum_os_version;
+pub mod note;
 pub mod source_version;
 pub mod symbol_table;
 pub mod symbol_table_information;
 pub mod two_level_hints;
 pub mod uuid;
+
+use super::parse_error::ParseError;
+use crate::{parser::ByteOrder, shared::IStaticStruct};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum SharedLoadCommand<'b> {
@@ -35,6 +37,9 @@ pub enum SharedLoadCommand<'b> {
     Thread(&'b [u8]),
     UnixThread(&'b [u8]),
     SubClient(&'b [u8]),
+    Note(note::LoadCommandNote),
+    LinkerOption(linker_option::LoadCommandLinkerOption<'b>),
+    BuildVersion(build_version::LoadCommandBuildVersion<'b>),
 }
 
 impl<'b> SharedLoadCommand<'b> {
@@ -68,6 +73,9 @@ impl<'b> SharedLoadCommand<'b> {
             Self::Thread(c) => c.len() as u32,
             Self::UnixThread(c) => c.len() as u32,
             Self::SubClient(c) => c.len() as u32,
+            Self::Note(_) => note::LoadCommandNote::BUFFER_SIZE as u32,
+            Self::LinkerOption(c) => c.get_size(),
+            Self::BuildVersion(c) => c.get_size(),
         }
     }
 
@@ -82,6 +90,16 @@ impl<'b> SharedLoadCommand<'b> {
                     .map(Self::LinkLibrary)
                     .map_err(|e| e.into())
             }
+            45 => Ok(Self::LinkerOption(
+                linker_option::LoadCommandLinkerOption::new(buffer)
+            )),
+            0x19 => buffer.try_into()
+                .map(|command_buffer| note::LoadCommandNote::new(
+                    byte_order,
+                    command_buffer
+                ))
+                .map(Self::Note)
+                .map_err(|_| ParseError::EOF),
             4 => Ok(Self::Thread(buffer)),
             5 => Ok(Self::UnixThread(buffer)),
             20 => Ok(Self::SubClient(buffer)),
@@ -165,7 +183,7 @@ impl<'b> SharedLoadCommand<'b> {
                 .ok_or(ParseError::EOF)
                 .and_then(|b| b.try_into().map_err(|_| ParseError::EOF))
                 .map(|command_buffer| {
-                    minimum_os_version::LoadCommandMinimumOSVersion::parse(
+                    minimum_os_version::LoadCommandMinimumOSVersion::new(
                         byte_order,
                         command_buffer,
                     )

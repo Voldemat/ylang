@@ -1,7 +1,7 @@
 pub mod header;
 pub mod load_command;
 
-use crate::parser::{shared::ByteOrder, variants::shared::EOF};
+use crate::{parser::shared::ByteOrder, shared::EOF};
 
 use super::shared::{
     ifile::IFile, iload_command::LoadCommandIterator, parse_error::ParseError,

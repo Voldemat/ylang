@@ -1,4 +1,4 @@
-use crate::parser::variants::shared::EOF;
+use crate::shared::EOF;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {

@@ -1,4 +1,4 @@
-use crate::parser::ByteOrder;
+use crate::{parser::ByteOrder, shared::IStaticStruct};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LoadCommandMinimumOSVersion {
@@ -10,12 +10,13 @@ pub struct LoadCommandMinimumOSVersion {
 
 impl LoadCommandMinimumOSVersion {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+}
 
+impl IStaticStruct<{ LoadCommandMinimumOSVersion::BUFFER_SIZE }>
+    for LoadCommandMinimumOSVersion
+{
     #[allow(clippy::unwrap_used)]
-    pub fn parse(
-        byte_order: ByteOrder,
-        buffer: &[u8; Self::BUFFER_SIZE],
-    ) -> Self {
+    fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {
             platform_type: byte_order
                 .read_u32(buffer.get(0..4).unwrap().try_into().unwrap()),

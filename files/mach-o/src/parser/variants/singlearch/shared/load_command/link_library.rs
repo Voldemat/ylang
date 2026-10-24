@@ -1,4 +1,4 @@
-use crate::parser::{ByteOrder, variants::shared::EOF};
+use crate::{parser::ByteOrder, shared::EOF};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LoadCommandLinkLibrary<'b> {

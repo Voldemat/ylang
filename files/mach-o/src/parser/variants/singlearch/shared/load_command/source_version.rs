@@ -6,7 +6,7 @@ pub struct LoadCommandSourceVersion {
 }
 
 impl LoadCommandSourceVersion {
-    pub const BUFFER_SIZE: usize = std::mem::size_of::<u64>();
+    pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
 
     pub fn new(
         byte_order: ByteOrder,

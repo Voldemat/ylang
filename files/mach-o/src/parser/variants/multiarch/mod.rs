@@ -1,7 +1,10 @@
 mod entry_header;
 pub use entry_header::EntryHeader;
 
-use super::shared::EOF;
+use crate::{
+    parser::ByteOrder,
+    shared::{EOF, FixedSizeStructIterator},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Header {
@@ -35,9 +38,10 @@ impl<'b> File<'b> {
     pub fn get_entry_headers(
         &self,
     ) -> impl Iterator<Item = Result<EntryHeader, EOF>> {
-        entry_header::EntryHeaderIterator::new(
+        FixedSizeStructIterator::new(
+            ByteOrder::BigEndian,
             self.rest_of_the_buffer,
-            self.header.binaries_count,
+            self.header.binaries_count as usize,
         )
     }
 }
