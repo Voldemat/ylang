@@ -1,10 +1,10 @@
 use crate::{
     parser::ByteOrder,
-    shared::{EOF, FixedSizeStructIterator, IStaticStruct},
+    shared::{EOF, FixedSizeStructIterator, IDynamicStruct, IStaticStruct},
 };
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LoadCommandBuildVersion<'b> {
+pub struct BuildVersion<'b> {
     pub platform: u32,
     pub minos: u32,
     pub sdk: u32,
@@ -27,31 +27,14 @@ impl IStaticStruct<{ BuildToolVersion::BUFFER_SIZE }> for BuildToolVersion {
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {
             tool: byte_order.read_u32(buffer[0..4].try_into().unwrap()),
-            version: byte_order.read_u32(buffer[0..4].try_into().unwrap()),
+            version: byte_order.read_u32(buffer[4..8].try_into().unwrap()),
         }
     }
 }
 
-impl<'b> LoadCommandBuildVersion<'b> {
+impl<'b> BuildVersion<'b> {
     pub const COMMAND_TYPE: u32 = 50;
-    #[allow(clippy::indexing_slicing)]
-    pub fn parse(byte_order: ByteOrder, buffer: &'b [u8]) -> Result<Self, EOF> {
-        Ok(Self {
-            platform: byte_order
-                .read_u32(buffer[0..4].try_into().map_err(|_| EOF)?),
-            minos: byte_order
-                .read_u32(buffer[4..8].try_into().map_err(|_| EOF)?),
-            sdk: byte_order
-                .read_u32(buffer[8..12].try_into().map_err(|_| EOF)?),
-            tools_count: byte_order
-                .read_u32(buffer[12..16].try_into().map_err(|_| EOF)?),
-            tools_buffer: &buffer[16..],
-        })
-    }
-
-    pub fn get_size(&self) -> u32 {
-        (std::mem::size_of::<u32>() * 4 + self.tools_buffer.len()) as u32
-    }
+    pub const PARAMS_BUFFER_SIZE: usize = std::mem::size_of::<u32>() * 4;
 
     pub fn get_tools(
         &self,
@@ -62,5 +45,30 @@ impl<'b> LoadCommandBuildVersion<'b> {
             { BuildToolVersion::BUFFER_SIZE },
             BuildToolVersion,
         >::new(byte_order, self.tools_buffer, self.tools_count as usize)
+    }
+}
+
+impl<'b> IDynamicStruct<'b, { BuildVersion::PARAMS_BUFFER_SIZE }>
+    for BuildVersion<'b>
+{
+    #[allow(clippy::unwrap_used)]
+    fn new(
+        byte_order: ByteOrder,
+        params_buffer: &[u8; BuildVersion::PARAMS_BUFFER_SIZE],
+        tools_buffer: &'b [u8],
+    ) -> Self {
+        Self {
+            platform: byte_order
+                .read_u32(params_buffer[0..4].try_into().unwrap()),
+            minos: byte_order.read_u32(params_buffer[4..8].try_into().unwrap()),
+            sdk: byte_order.read_u32(params_buffer[8..12].try_into().unwrap()),
+            tools_count: byte_order
+                .read_u32(params_buffer[12..16].try_into().unwrap()),
+            tools_buffer,
+        }
+    }
+
+    fn get_size(&self) -> u32 {
+        (Self::PARAMS_BUFFER_SIZE + self.tools_buffer.len()) as u32
     }
 }

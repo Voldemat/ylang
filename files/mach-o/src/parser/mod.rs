@@ -31,10 +31,9 @@ impl<'b> MachOFile<'b> {
     }
 
     pub fn parse(buffer: &'b [u8]) -> Result<Self, ParseError> {
-        let (magic_buffer, rest_of_the_buffer) = buffer.split_at(4);
-        let magic_buffer =
-            magic_buffer.try_into().map_err(|_| ParseError::EOF)?;
-        let magic_big_endian = u32::from_be_bytes(magic_buffer);
+        let (magic_buffer, rest_of_the_buffer) =
+            buffer.split_first_chunk::<4>().ok_or(ParseError::EOF)?;
+        let magic_big_endian = u32::from_be_bytes(*magic_buffer);
         if magic_big_endian == variants::multiarch::File::MAGIC_VALUE_BE {
             return variants::multiarch::File::parse(rest_of_the_buffer)
                 .map(MachOFile::MultiArch)

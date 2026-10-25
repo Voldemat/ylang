@@ -1,34 +1,41 @@
-use crate::{parser::ByteOrder, shared::EOF};
+use crate::{parser::ByteOrder, shared::IDynamicStruct};
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LoadCommandLinkLibrary<'b> {
+pub struct LinkLibrary<'b> {
     pub string_offset: u32,
     pub timestamp: u32,
     pub current_version: u32,
     pub compatible_version: u32,
-    pub file_path: &'b [u8],
+    pub rest_of_the_buffer: &'b [u8],
 }
 
-impl<'b> LoadCommandLinkLibrary<'b> {
-    pub fn get_size(&self) -> u32 {
-        (std::mem::size_of::<u32>() * 4 + self.file_path.len()) as u32
+impl<'b> LinkLibrary<'b> {
+    pub const PARAMS_BUFFER_SIZE: usize = std::mem::size_of::<u32>() * 4;
+}
+
+impl<'b> IDynamicStruct<'b, { LinkLibrary::PARAMS_BUFFER_SIZE }>
+    for LinkLibrary<'b>
+{
+    fn get_size(&self) -> u32 {
+        (Self::PARAMS_BUFFER_SIZE + self.rest_of_the_buffer.len()) as u32
     }
 
-    pub fn parse(byte_order: ByteOrder, buffer: &'b [u8]) -> Result<Self, EOF> {
-        Ok(Self {
-            string_offset: byte_order.read_u32(
-                buffer.get(0..4).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
-            ),
-            timestamp: byte_order.read_u32(
-                buffer.get(4..8).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
-            ),
-            current_version: byte_order.read_u32(
-                buffer.get(8..12).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
-            ),
-            compatible_version: byte_order.read_u32(
-                buffer.get(12..16).ok_or(EOF)?.try_into().map_err(|_| EOF)?,
-            ),
-            file_path: buffer.get(16..).ok_or(EOF)?,
-        })
+    #[allow(clippy::unwrap_used)]
+    fn new(
+        byte_order: ByteOrder,
+        params_buffer: &'b [u8; LinkLibrary::PARAMS_BUFFER_SIZE],
+        rest_of_the_buffer: &'b [u8],
+    ) -> Self {
+        Self {
+            string_offset: byte_order
+                .read_u32(params_buffer[0..4].try_into().unwrap()),
+            timestamp: byte_order
+                .read_u32(params_buffer[4..8].try_into().unwrap()),
+            current_version: byte_order
+                .read_u32(params_buffer[8..12].try_into().unwrap()),
+            compatible_version: byte_order
+                .read_u32(params_buffer[12..16].try_into().unwrap()),
+            rest_of_the_buffer,
+        }
     }
 }

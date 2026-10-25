@@ -1,7 +1,7 @@
-use crate::parser::ByteOrder;
+use crate::{parser::ByteOrder, shared::IStaticStruct};
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LoadCommandCompressedLinkEditTable {
+pub struct CompressedLinkEditTable {
     pub rebase_file_offset: u32,
     pub rebase_size: u32,
     pub bind_file_offset: u32,
@@ -14,15 +14,17 @@ pub struct LoadCommandCompressedLinkEditTable {
     pub export_size: u32,
 }
 
-impl LoadCommandCompressedLinkEditTable {
+impl CompressedLinkEditTable {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
     pub const COMMAND_TYPE: u32 = 0x00000022;
+    pub const COMMAND_TYPE_ONLY: u32 = 0x80000022;
+}
 
+impl IStaticStruct<{ CompressedLinkEditTable::BUFFER_SIZE }>
+    for CompressedLinkEditTable
+{
     #[allow(clippy::unwrap_used)]
-    pub fn parse(
-        byte_order: ByteOrder,
-        buffer: &[u8; Self::BUFFER_SIZE],
-    ) -> Self {
+    fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {
             rebase_file_offset: byte_order
                 .read_u32(buffer.get(0..4).unwrap().try_into().unwrap()),

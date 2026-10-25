@@ -65,9 +65,8 @@ impl<'b> File<'b> {
     }
 
     pub fn parse(buffer: &'b [u8]) -> Result<Self, ParseError> {
-        let (magic_buffer, rest_of_the_buffer) = buffer.split_at(4);
-        let magic_buffer =
-            magic_buffer.try_into().map_err(|_| ParseError::EOF)?;
-        Self::parse_with_magic_buffer(magic_buffer, rest_of_the_buffer)
+        let (magic_buffer, rest_of_the_buffer) =
+            buffer.split_first_chunk::<4>().ok_or(ParseError::EOF)?;
+        Self::parse_with_magic_buffer(*magic_buffer, rest_of_the_buffer)
     }
 }

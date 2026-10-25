@@ -1,7 +1,7 @@
-use crate::parser::ByteOrder;
+use crate::{parser::ByteOrder, shared::IStaticStruct};
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LoadCommandSymbolTableInformation {
+pub struct SymbolTableInformation {
     pub local_symbols_index: u32,
     pub local_symbols_count: u32,
     pub external_symbols_index: u32,
@@ -22,14 +22,15 @@ pub struct LoadCommandSymbolTableInformation {
     pub local_relocation_table_entries_count: u32,
 }
 
-impl LoadCommandSymbolTableInformation {
+impl SymbolTableInformation {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+}
 
+impl IStaticStruct<{ SymbolTableInformation::BUFFER_SIZE }>
+    for SymbolTableInformation
+{
     #[allow(clippy::unwrap_used)]
-    pub fn parse(
-        byte_order: ByteOrder,
-        buffer: &[u8; Self::BUFFER_SIZE],
-    ) -> Self {
+    fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {
             local_symbols_index: byte_order
                 .read_u32(buffer.get(0..4).unwrap().try_into().unwrap()),

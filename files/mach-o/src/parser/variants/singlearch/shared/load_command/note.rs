@@ -4,17 +4,18 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LoadCommandNote {
+pub struct Note {
     pub data_owner: AsciiString<16>,
     pub offset: u64,
     pub size: u64,
 }
 
-impl LoadCommandNote {
+impl Note {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+    pub const COMMAND_TYPE: u32 = 0x31;
 }
 
-impl IStaticStruct<{ LoadCommandNote::BUFFER_SIZE }> for LoadCommandNote {
+impl IStaticStruct<{ Note::BUFFER_SIZE }> for Note {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {

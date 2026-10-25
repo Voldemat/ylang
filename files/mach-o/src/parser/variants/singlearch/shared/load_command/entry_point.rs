@@ -1,19 +1,17 @@
 use crate::{parser::ByteOrder, shared::IStaticStruct};
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LoadCommandEntryPoint {
+pub struct EntryPoint {
     pub address: u64,
     pub stack_memory_size: u64,
 }
 
-impl LoadCommandEntryPoint {
+impl EntryPoint {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
     pub const COMMAND_TYPE: u32 = 0x80000028;
 }
 
-impl IStaticStruct<{ LoadCommandEntryPoint::BUFFER_SIZE }>
-    for LoadCommandEntryPoint
-{
+impl IStaticStruct<{ EntryPoint::BUFFER_SIZE }> for EntryPoint {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {

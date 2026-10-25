@@ -23,11 +23,18 @@ impl<const N: usize> AsRef<str> for AsciiString<N> {
 pub struct CStringIterator<'b> {
     buffer: &'b [u8],
     offset: usize,
+    max_count: usize,
+    count: usize,
 }
 
 impl<'b> CStringIterator<'b> {
-    pub fn new(buffer: &'b [u8]) -> Self {
-        Self { buffer, offset: 0 }
+    pub fn new(buffer: &'b [u8], max_count: usize) -> Self {
+        Self {
+            buffer,
+            offset: 0,
+            max_count,
+            count: 0,
+        }
     }
 }
 
@@ -35,7 +42,11 @@ impl<'b> Iterator for CStringIterator<'b> {
     type Item = Result<&'b std::ffi::CStr, EOF>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.offset == self.buffer.len() {
+        if self.count == self.max_count {
+            if self.offset != self.buffer.len() {
+                self.offset = self.buffer.len();
+                return Some(Err(EOF));
+            };
             return None;
         };
         let Some(current_buffer) = self.buffer.get(self.offset..) else {
@@ -47,13 +58,49 @@ impl<'b> Iterator for CStringIterator<'b> {
             self.offset = self.buffer.len();
             return Some(Err(EOF));
         };
-        self.offset = cstring.count_bytes() + 1;
+        self.offset += cstring.count_bytes() + 1;
+        self.count += 1;
         Some(Ok(cstring))
     }
 }
 
 pub trait IStaticStruct<const BUFFER_SIZE: usize> {
     fn new(byte_order: ByteOrder, buffer: &[u8; BUFFER_SIZE]) -> Self;
+}
+
+pub fn parse_static_struct<
+    const BUFFER_SIZE: usize,
+    T: IStaticStruct<BUFFER_SIZE>,
+>(
+    byte_order: ByteOrder,
+    buffer: &[u8],
+) -> Option<T> {
+    buffer.try_into().ok().map(|b| T::new(byte_order, b))
+}
+
+pub trait IDynamicStruct<'b, const PARAMS_BUFFER_SIZE: usize>: 'b {
+    fn new(
+        byte_order: ByteOrder,
+        params_buffer: &'b [u8; PARAMS_BUFFER_SIZE],
+        rest_of_the_buffer: &'b [u8],
+    ) -> Self;
+
+    fn get_size(&self) -> u32;
+}
+
+pub fn parse_dynamic_struct<
+    'b,
+    const PARAMS_BUFFER_SIZE: usize,
+    T: IDynamicStruct<'b, PARAMS_BUFFER_SIZE>,
+>(
+    byte_order: ByteOrder,
+    buffer: &'b [u8],
+) -> Option<T> {
+    buffer.split_first_chunk::<PARAMS_BUFFER_SIZE>().map(
+        |(params_buffer, rest_of_the_buffer)| {
+            T::new(byte_order, params_buffer, rest_of_the_buffer)
+        },
+    )
 }
 
 pub struct FixedSizeStructIterator<'b, const BUFFER_SIZE: usize, T> {

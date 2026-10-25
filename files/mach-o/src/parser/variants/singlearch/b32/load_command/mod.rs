@@ -9,12 +9,12 @@ use crate::{
             parse_error::ParseError,
         },
     },
-    shared::IStaticStruct,
+    shared::{IDynamicStruct, parse_dynamic_struct, parse_static_struct},
 };
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum LoadCommand<'b> {
-    Segment(segment::LoadCommandSegment<'b>),
+    Segment(segment::Segment<'b>),
     EncryptionInfo(encryption_info::EncryptionInfo),
     Shared(SharedLoadCommand<'b>),
 }
@@ -36,19 +36,16 @@ impl<'b> ILoadCommand<'b> for LoadCommand<'b> {
         buffer: &'b [u8],
     ) -> Result<Self, ParseError> {
         match command_type {
-            segment::LoadCommandSegment::COMMAND_TYPE => Ok(Self::Segment(
-                segment::LoadCommandSegment::new(byte_order, buffer),
-            )),
-            encryption_info::EncryptionInfo::COMMAND_TYPE => buffer
-                .try_into()
-                .map(|command_buffer| {
-                    encryption_info::EncryptionInfo::new(
-                        byte_order,
-                        command_buffer,
-                    )
-                })
-                .map(Self::EncryptionInfo)
-                .map_err(|_| ParseError::EOF),
+            segment::Segment::COMMAND_TYPE => {
+                parse_dynamic_struct(byte_order, buffer)
+                    .ok_or(ParseError::EOF)
+                    .map(Self::Segment)
+            }
+            encryption_info::EncryptionInfo::COMMAND_TYPE => {
+                parse_static_struct(byte_order, buffer)
+                    .ok_or(ParseError::EOF)
+                    .map(Self::EncryptionInfo)
+            }
             _ => SharedLoadCommand::parse(byte_order, command_type, buffer)
                 .map(Self::Shared),
         }
