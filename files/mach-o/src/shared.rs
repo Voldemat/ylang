@@ -43,10 +43,6 @@ impl<'b> Iterator for CStringIterator<'b> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.count == self.max_count {
-            if self.offset != self.buffer.len() {
-                self.offset = self.buffer.len();
-                return Some(Err(EOF));
-            };
             return None;
         };
         let Some(current_buffer) = self.buffer.get(self.offset..) else {
