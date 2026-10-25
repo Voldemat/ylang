@@ -16,6 +16,7 @@ pub struct LoadCommandCompressedLinkEditTable {
 
 impl LoadCommandCompressedLinkEditTable {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+    pub const COMMAND_TYPE: u32 = 0x00000022;
 
     #[allow(clippy::unwrap_used)]
     pub fn parse(

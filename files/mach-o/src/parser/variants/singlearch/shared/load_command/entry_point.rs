@@ -8,6 +8,7 @@ pub struct LoadCommandEntryPoint {
 
 impl LoadCommandEntryPoint {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+    pub const COMMAND_TYPE: u32 = 0x80000028;
 }
 
 impl IStaticStruct<{ LoadCommandEntryPoint::BUFFER_SIZE }>

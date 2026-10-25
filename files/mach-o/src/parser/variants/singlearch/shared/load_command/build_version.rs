@@ -33,8 +33,9 @@ impl IStaticStruct<{ BuildToolVersion::BUFFER_SIZE }> for BuildToolVersion {
 }
 
 impl<'b> LoadCommandBuildVersion<'b> {
+    pub const COMMAND_TYPE: u32 = 50;
     #[allow(clippy::indexing_slicing)]
-    pub fn new(byte_order: ByteOrder, buffer: &'b [u8]) -> Result<Self, EOF> {
+    pub fn parse(byte_order: ByteOrder, buffer: &'b [u8]) -> Result<Self, EOF> {
         Ok(Self {
             platform: byte_order
                 .read_u32(buffer[0..4].try_into().map_err(|_| EOF)?),

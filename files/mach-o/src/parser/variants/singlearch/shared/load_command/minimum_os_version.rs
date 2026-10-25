@@ -10,6 +10,10 @@ pub struct LoadCommandMinimumOSVersion {
 
 impl LoadCommandMinimumOSVersion {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+    pub const COMMAND_TYPE_WATCHOS: u32 = 48;
+    pub const COMMAND_TYPE_IPHONEOS: u32 = 37;
+    pub const COMMAND_TYPE_MACOSX: u32 = 36;
+    pub const COMMAND_TYPE_TVOS: u32 = 47;
 }
 
 impl IStaticStruct<{ LoadCommandMinimumOSVersion::BUFFER_SIZE }>

@@ -2,12 +2,15 @@ pub mod build_version;
 pub mod compressed_link_edit_table;
 pub mod dylinker;
 pub mod entry_point;
+pub mod fileset_entry;
 pub mod header;
 pub mod link_library;
 pub mod linked_it;
 pub mod linker_option;
 pub mod minimum_os_version;
 pub mod note;
+pub mod prebind_cksum;
+pub mod rpath;
 pub mod source_version;
 pub mod symbol_table;
 pub mod symbol_table_information;
@@ -40,6 +43,9 @@ pub enum SharedLoadCommand<'b> {
     Note(note::LoadCommandNote),
     LinkerOption(linker_option::LoadCommandLinkerOption<'b>),
     BuildVersion(build_version::LoadCommandBuildVersion<'b>),
+    FilesetEntry(fileset_entry::FilesetEntry<'b>),
+    RPath(rpath::RPath<'b>),
+    PrebindCksum(prebind_cksum::PrebindCksum),
 }
 
 impl<'b> SharedLoadCommand<'b> {
@@ -76,6 +82,9 @@ impl<'b> SharedLoadCommand<'b> {
             Self::Note(_) => note::LoadCommandNote::BUFFER_SIZE as u32,
             Self::LinkerOption(c) => c.get_size(),
             Self::BuildVersion(c) => c.get_size(),
+            Self::FilesetEntry(c) => c.get_size(),
+            Self::RPath(c) => c.get_size(),
+            Self::PrebindCksum(_) => prebind_cksum::PrebindCksum::BUFFER_SIZE as u32,
         }
     }
 
@@ -90,6 +99,18 @@ impl<'b> SharedLoadCommand<'b> {
                     .map(Self::LinkLibrary)
                     .map_err(|e| e.into())
             }
+            prebind_cksum::PrebindCksum::COMMAND_TYPE => {
+                buffer.try_into().map(|command_buffer|
+                    prebind_cksum::PrebindCksum::new(byte_order, command_buffer)
+                ).map(Self::PrebindCksum).map_err(|_| ParseError::EOF)
+            },
+            build_version::LoadCommandBuildVersion::COMMAND_TYPE =>
+                build_version::LoadCommandBuildVersion::parse(byte_order, buffer)
+                    .map(Self::BuildVersion)
+                    .map_err(|e| e.into()),
+            fileset_entry::FilesetEntry::COMMAND_TYPE =>
+                fileset_entry::FilesetEntry::parse(byte_order, buffer)
+                .map(Self::FilesetEntry),
             45 => Ok(Self::LinkerOption(
                 linker_option::LoadCommandLinkerOption::new(buffer)
             )),
@@ -151,7 +172,7 @@ impl<'b> SharedLoadCommand<'b> {
                     )
                 })
                 .map(Self::SymbolTableInformation),
-            0x00000022 => buffer
+            compressed_link_edit_table::LoadCommandCompressedLinkEditTable::COMMAND_TYPE => buffer
                 .get(0..compressed_link_edit_table::LoadCommandCompressedLinkEditTable::BUFFER_SIZE)
                 .ok_or(ParseError::EOF)
                 .and_then(|b| b.try_into().map_err(|_| ParseError::EOF))
@@ -162,7 +183,7 @@ impl<'b> SharedLoadCommand<'b> {
                     )
                 })
                 .map(Self::CompressedLinkEditTable),
-            0x00000028 | 0x80000028 => buffer
+            entry_point::LoadCommandEntryPoint::COMMAND_TYPE => buffer
                 .get(0..entry_point::LoadCommandEntryPoint::BUFFER_SIZE)
                 .ok_or(ParseError::EOF)
                 .and_then(|b| b.try_into().map_err(|_| ParseError::EOF))
@@ -170,7 +191,7 @@ impl<'b> SharedLoadCommand<'b> {
                     entry_point::LoadCommandEntryPoint::new(byte_order, command_buffer)
                 })
                 .map(Self::MainEntryPoint),
-            0x0000001B => buffer
+            uuid::LoadCommandUUIDNumber::COMMAND_TYPE => buffer
                 .get(0..uuid::LoadCommandUUIDNumber::BUFFER_SIZE)
                 .ok_or(ParseError::EOF)
                 .and_then(|b| b.try_into().map_err(|_| ParseError::EOF))
@@ -178,7 +199,10 @@ impl<'b> SharedLoadCommand<'b> {
                     uuid::LoadCommandUUIDNumber::parse(command_buffer)
                 })
                 .map(Self::UUIDNumber),
-            0x00000032 => buffer
+            minimum_os_version::LoadCommandMinimumOSVersion::COMMAND_TYPE_MACOSX |
+                minimum_os_version::LoadCommandMinimumOSVersion::COMMAND_TYPE_WATCHOS |
+                minimum_os_version::LoadCommandMinimumOSVersion::COMMAND_TYPE_TVOS |
+                minimum_os_version::LoadCommandMinimumOSVersion::COMMAND_TYPE_IPHONEOS => buffer
                 .get(0..minimum_os_version::LoadCommandMinimumOSVersion::BUFFER_SIZE)
                 .ok_or(ParseError::EOF)
                 .and_then(|b| b.try_into().map_err(|_| ParseError::EOF))
