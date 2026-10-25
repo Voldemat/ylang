@@ -5,7 +5,8 @@ use crate::{
     parser::{
         ByteOrder,
         variants::singlearch::shared::{
-            iload_command::ILoadCommand, load_command::SharedLoadCommand,
+            iload_command_content::ILoadCommandContent,
+            load_command_content::SharedLoadCommandContent,
             parse_error::ParseError,
         },
     },
@@ -13,13 +14,13 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum LoadCommand<'b> {
+pub enum LoadCommandContent<'b> {
     Segment(segment::Segment<'b>),
     EncryptionInfo(encryption_info::EncryptionInfo),
-    Shared(SharedLoadCommand<'b>),
+    Shared(SharedLoadCommandContent<'b>),
 }
 
-impl<'b> ILoadCommand<'b> for LoadCommand<'b> {
+impl<'b> ILoadCommandContent<'b> for LoadCommandContent<'b> {
     fn get_size(&self) -> u32 {
         match self {
             Self::Segment(c) => c.get_size(),
@@ -46,8 +47,12 @@ impl<'b> ILoadCommand<'b> for LoadCommand<'b> {
                     .ok_or(ParseError::EOF)
                     .map(Self::EncryptionInfo)
             }
-            _ => SharedLoadCommand::parse(byte_order, command_type, buffer)
-                .map(Self::Shared),
+            _ => SharedLoadCommandContent::parse(
+                byte_order,
+                command_type,
+                buffer,
+            )
+            .map(Self::Shared),
         }
     }
 }

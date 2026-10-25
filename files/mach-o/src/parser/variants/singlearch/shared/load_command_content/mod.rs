@@ -3,7 +3,6 @@ pub mod compressed_link_edit_table;
 pub mod dylinker;
 pub mod entry_point;
 pub mod fileset_entry;
-pub mod header;
 pub mod link_library;
 pub mod linked_it;
 pub mod linker_option;
@@ -24,7 +23,7 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum SharedLoadCommand<'b> {
+pub enum SharedLoadCommandContent<'b> {
     LinkLibrary(link_library::LinkLibrary<'b>),
     SymbolTable(symbol_table::SymbolTable),
     SymbolTableInformation(symbol_table_information::SymbolTableInformation),
@@ -49,7 +48,7 @@ pub enum SharedLoadCommand<'b> {
     PrebindCksum(prebind_cksum::PrebindCksum),
 }
 
-impl<'b> SharedLoadCommand<'b> {
+impl<'b> SharedLoadCommandContent<'b> {
     pub fn get_size(&self) -> u32 {
         match self {
             Self::LinkLibrary(c) => c.get_size(),

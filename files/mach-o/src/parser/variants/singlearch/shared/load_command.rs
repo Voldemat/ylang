@@ -18,3 +18,8 @@ impl Header {
         }
     }
 }
+
+pub struct LoadCommand<T> {
+    pub header: Header,
+    pub content: T,
+}

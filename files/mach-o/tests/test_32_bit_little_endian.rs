@@ -30,9 +30,9 @@ pub fn test_32_bit_little_endian_file() {
         load_commands.len(),
         file.header.load_commands_count as usize
     );
-    let parser::variants::singlearch::b32::load_command::LoadCommand::Segment(
+    let parser::variants::singlearch::b32::load_command::LoadCommandContent::Segment(
         segment,
-    ) = &load_commands[0]
+    ) = &load_commands[0].content
     else {
         panic!("Expected load segment command as first command");
     };

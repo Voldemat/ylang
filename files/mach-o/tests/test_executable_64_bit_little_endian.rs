@@ -30,9 +30,9 @@ pub fn test_64_bit_little_endian_file() {
         load_commands.len(),
         file.header.load_commands_count as usize
     );
-    let parser::variants::singlearch::b64::load_command::LoadCommand::Segment(
+    let parser::variants::singlearch::b64::load_command::LoadCommandContent::Segment(
         first_command,
-    ) = &load_commands[0]
+    ) = &load_commands[0].content
     else {
         panic!("Expected first command to be segment load command");
     };
@@ -45,9 +45,9 @@ pub fn test_64_bit_little_endian_file() {
         0
     );
 
-    let parser::variants::singlearch::b64::load_command::LoadCommand::Segment(
+    let parser::variants::singlearch::b64::load_command::LoadCommandContent::Segment(
         second_command,
-    ) = &load_commands[1]
+    ) = &load_commands[1].content
     else {
         panic!("Expected second command to be segment load command");
     };
@@ -86,9 +86,9 @@ pub fn test_64_bit_little_endian_file() {
     assert_eq!(second_command_sections[1].relocation_entries_file_offset, 0);
     assert_eq!(second_command_sections[1].relocation_entries_count, 0);
     assert_eq!(second_command_sections[1].flags, 0);
-    let parser::variants::singlearch::b64::load_command::LoadCommand::Segment(
+    let parser::variants::singlearch::b64::load_command::LoadCommandContent::Segment(
         third_command,
-    ) = &load_commands[2]
+    ) = &load_commands[2].content
     else {
         panic!("Expected third command to be segment load command");
     };

@@ -1,8 +1,9 @@
 use crate::parser::ByteOrder;
 
+use super::load_command::{Header, LoadCommand};
 use super::{ifile::IFile, parse_error::ParseError};
 
-pub trait ILoadCommand<'b>: Sized + std::fmt::Debug {
+pub trait ILoadCommandContent<'b>: Sized + std::fmt::Debug {
     fn get_size(&self) -> u32;
     fn parse(
         byte_order: ByteOrder,
@@ -11,30 +12,30 @@ pub trait ILoadCommand<'b>: Sized + std::fmt::Debug {
     ) -> Result<Self, ParseError>;
 }
 
-pub struct LoadCommandIterator<'f, TFile, TLoadCommand> {
+pub struct LoadCommandIterator<'f, TFile, TLoadCommandContent> {
     pub file: &'f TFile,
     pub count: u32,
     pub offset: usize,
-    pub _a: std::marker::PhantomData<TLoadCommand>,
+    pub _a: std::marker::PhantomData<TLoadCommandContent>,
 }
 
-impl<'f, 'b, TFile: IFile<'b>, TLoadCommand: ILoadCommand<'b>>
-    LoadCommandIterator<'f, TFile, TLoadCommand>
+impl<'f, 'b, TFile: IFile<'b>, TLoadCommandContent: ILoadCommandContent<'b>>
+    LoadCommandIterator<'f, TFile, TLoadCommandContent>
 {
     pub const fn new(file: &'f TFile) -> Self {
         Self {
             file,
             count: 0,
             offset: 0,
-            _a: std::marker::PhantomData::<TLoadCommand>,
+            _a: std::marker::PhantomData::<TLoadCommandContent>,
         }
     }
 }
 
-impl<'f, 'b, TFile: IFile<'b>, TLoadCommand: ILoadCommand<'b>> Iterator
-    for LoadCommandIterator<'f, TFile, TLoadCommand>
+impl<'f, 'b, TFile: IFile<'b>, TLoadCommandContent: ILoadCommandContent<'b>>
+    Iterator for LoadCommandIterator<'f, TFile, TLoadCommandContent>
 {
-    type Item = Result<TLoadCommand, ParseError>;
+    type Item = Result<LoadCommand<TLoadCommandContent>, ParseError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.count == self.file.get_load_commands_count() {
@@ -49,25 +50,20 @@ impl<'f, 'b, TFile: IFile<'b>, TLoadCommand: ILoadCommand<'b>> Iterator
             self.count = self.file.get_load_commands_count();
             return Some(Err(ParseError::EOF));
         };
-        let Some((header_buffer, rest_of_the_buffer)) = buffer
-            .split_first_chunk::<{ std::mem::size_of::<super::load_command::header::Header>() }>(
-            )
+        let Some((header_buffer, rest_of_the_buffer)) =
+            buffer.split_first_chunk::<{ std::mem::size_of::<Header>() }>()
         else {
             self.count = self.file.get_load_commands_count();
             return Some(Err(ParseError::EOF));
         };
-        let command_header = super::load_command::header::Header::new(
-            self.file.get_byte_order(),
-            header_buffer,
-        );
-        if command_header.command_size
-            <= std::mem::size_of::<super::load_command::header::Header>() as u32
-        {
+        let command_header =
+            Header::new(self.file.get_byte_order(), header_buffer);
+        if command_header.command_size <= std::mem::size_of::<Header>() as u32 {
             self.count = self.file.get_load_commands_count();
             return Some(Err(ParseError::EOF));
         }
         let command_buffer_size = command_header.command_size as usize
-            - std::mem::size_of::<super::load_command::header::Header>();
+            - std::mem::size_of::<Header>();
         let Some(command_buffer) =
             rest_of_the_buffer.get(0..command_buffer_size)
         else {
@@ -76,10 +72,16 @@ impl<'f, 'b, TFile: IFile<'b>, TLoadCommand: ILoadCommand<'b>> Iterator
         };
         self.count += 1;
         self.offset += command_header.command_size as usize;
-        Some(TLoadCommand::parse(
-            self.file.get_byte_order(),
-            command_header.command_type,
-            command_buffer,
-        ))
+        Some(
+            TLoadCommandContent::parse(
+                self.file.get_byte_order(),
+                command_header.command_type,
+                command_buffer,
+            )
+            .map(|content| LoadCommand {
+                header: command_header,
+                content,
+            }),
+        )
     }
 }

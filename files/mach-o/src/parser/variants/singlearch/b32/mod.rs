@@ -4,7 +4,8 @@ pub mod load_command;
 use crate::{parser::shared::ByteOrder, shared::EOF};
 
 use super::shared::{
-    ifile::IFile, iload_command::LoadCommandIterator, parse_error::ParseError,
+    ifile::IFile, iload_command_content::LoadCommandIterator,
+    load_command::LoadCommand, parse_error::ParseError,
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -61,8 +62,12 @@ impl<'b> File<'b> {
 
     pub fn get_load_commands(
         &self,
-    ) -> impl Iterator<Item = Result<load_command::LoadCommand<'b>, ParseError>>
-    {
+    ) -> impl Iterator<
+        Item = Result<
+            LoadCommand<load_command::LoadCommandContent<'b>>,
+            ParseError,
+        >,
+    > {
         LoadCommandIterator::new(self)
     }
 }
