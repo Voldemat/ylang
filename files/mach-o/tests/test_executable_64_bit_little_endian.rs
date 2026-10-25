@@ -72,6 +72,13 @@ pub fn test_64_bit_little_endian_file() {
     assert_eq!(second_command_sections[0].relocation_entries_count, 0);
     assert_eq!(second_command_sections[0].flags, 2147484672);
     assert_eq!(
+        second_command_sections[0]
+            .get_relocation_entries(ByteOrder::LittleEndian, &buffer)
+            .unwrap()
+            .count(),
+        0
+    );
+    assert_eq!(
         second_command_sections[1].section_name.as_ref(),
         "__unwind_info\0\0\0"
     );
@@ -86,6 +93,13 @@ pub fn test_64_bit_little_endian_file() {
     assert_eq!(second_command_sections[1].relocation_entries_file_offset, 0);
     assert_eq!(second_command_sections[1].relocation_entries_count, 0);
     assert_eq!(second_command_sections[1].flags, 0);
+    assert_eq!(
+        second_command_sections[1]
+            .get_relocation_entries(ByteOrder::LittleEndian, &buffer)
+            .unwrap()
+            .count(),
+        0
+    );
     let parser::variants::singlearch::b64::load_command::LoadCommandContent::Segment(
         third_command,
     ) = &load_commands[2].content

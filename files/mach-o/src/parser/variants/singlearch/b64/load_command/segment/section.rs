@@ -1,6 +1,9 @@
 use crate::{
-    parser::ByteOrder,
-    shared::{AsciiString, IStaticStruct},
+    parser::{
+        ByteOrder,
+        variants::singlearch::shared::relocation_entry::RelocationEntry,
+    },
+    shared::{AsciiString, EOF, FixedSizeStructIterator, IStaticStruct},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -23,6 +26,23 @@ impl Section<'_> {
     pub const BUFFER_SIZE: usize = 16 * 2
         + std::mem::size_of::<u64>() * 2
         + std::mem::size_of::<u32>() * 8;
+
+    pub fn get_relocation_entries(
+        &self,
+        byte_order: ByteOrder,
+        file_buffer: &[u8],
+    ) -> Result<impl Iterator<Item = Result<RelocationEntry, EOF>>, EOF> {
+        file_buffer
+            .get(self.relocation_entries_file_offset as usize..)
+            .ok_or(EOF)
+            .map(|buffer| {
+                FixedSizeStructIterator::new(
+                    byte_order,
+                    buffer,
+                    self.relocation_entries_count as usize,
+                )
+            })
+    }
 }
 
 impl<'b> IStaticStruct<'b, { Section::BUFFER_SIZE }> for Section<'b> {

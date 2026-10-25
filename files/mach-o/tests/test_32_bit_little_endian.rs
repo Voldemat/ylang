@@ -1,4 +1,7 @@
-use macho::parser::{self, ByteOrder};
+use macho::parser::{
+    self, ByteOrder,
+    variants::singlearch::shared::relocation_entry::RelocationEntry,
+};
 
 #[test]
 pub fn test_32_bit_little_endian_file() {
@@ -63,6 +66,14 @@ pub fn test_32_bit_little_endian_file() {
     assert_eq!(sections[0].flags, 2147484672);
     assert_eq!(sections[0]._reserved1, 0);
     assert_eq!(sections[0]._reserved2, 0);
+    assert_eq!(
+        sections[0]
+            .get_relocation_entries(ByteOrder::LittleEndian, &buffer)
+            .unwrap()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap(),
+        vec![]
+    );
 
     assert_eq!(sections[1].section_name.as_ref(), "__compact_unwind");
     assert_eq!(
@@ -78,6 +89,19 @@ pub fn test_32_bit_little_endian_file() {
     assert_eq!(sections[1].flags, 33554432);
     assert_eq!(sections[1]._reserved1, 0);
     assert_eq!(sections[1]._reserved2, 0);
+    assert_eq!(
+        sections[1]
+            .get_relocation_entries(ByteOrder::LittleEndian, &buffer)
+            .unwrap()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap(),
+        vec![RelocationEntry {
+            offset: 0,
+            // symbolnum = 1 (__text), pcrel = 0, length = 2 (4 bytes),
+            // extern = 0, type = 0 (GENERIC_RELOC_VANILLA)
+            options: 0x04000001,
+        }]
+    );
 
     assert_eq!(sections[2].section_name.as_ref(), "__eh_frame\0\0\0\0\0\0");
     assert_eq!(
@@ -93,4 +117,12 @@ pub fn test_32_bit_little_endian_file() {
     assert_eq!(sections[2].flags, 1744830475);
     assert_eq!(sections[2]._reserved1, 0);
     assert_eq!(sections[2]._reserved2, 0);
+    assert_eq!(
+        sections[2]
+            .get_relocation_entries(ByteOrder::LittleEndian, &buffer)
+            .unwrap()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap(),
+        vec![]
+    );
 }
