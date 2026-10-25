@@ -1,4 +1,7 @@
-use crate::{parser::ByteOrder, shared::IDynamicStruct};
+use crate::{
+    parser::{ByteOrder, variants::singlearch::shared::load_command},
+    shared::{EOF, IDynamicStruct},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LinkLibrary<'b> {
@@ -11,6 +14,19 @@ pub struct LinkLibrary<'b> {
 
 impl<'b> LinkLibrary<'b> {
     pub const PARAMS_BUFFER_SIZE: usize = std::mem::size_of::<u32>() * 4;
+
+    pub fn get_string(&self) -> Result<&'b std::ffi::CStr, EOF> {
+        (self.string_offset as usize)
+            .checked_sub(
+                std::mem::size_of::<load_command::Header>()
+                    + Self::PARAMS_BUFFER_SIZE,
+            )
+            .and_then(|offset| self.rest_of_the_buffer.get(offset..))
+            .and_then(|buffer| {
+                std::ffi::CStr::from_bytes_until_nul(buffer).ok()
+            })
+            .ok_or(EOF)
+    }
 }
 
 impl<'b> IDynamicStruct<'b, { LinkLibrary::PARAMS_BUFFER_SIZE }>

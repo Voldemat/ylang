@@ -7,7 +7,7 @@ pub mod section;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Segment<'b> {
-    pub segment_name: AsciiString<16>,
+    pub segment_name: AsciiString<'b, 16>,
     pub address: u64,
     pub address_size: u64,
     pub file_offset: u64,
@@ -22,14 +22,12 @@ pub struct Segment<'b> {
 impl<'b> Segment<'b> {
     pub const COMMAND_TYPE: u32 = 0x00000019;
     pub const PARAMS_BUFFER_SIZE: usize =
-        std::mem::size_of::<AsciiString<16>>()
-            + std::mem::size_of::<u64>() * 4
-            + std::mem::size_of::<u32>() * 4;
+        16 + std::mem::size_of::<u64>() * 4 + std::mem::size_of::<u32>() * 4;
 
     pub fn parse_sections(
         &self,
         byte_order: ByteOrder,
-    ) -> impl Iterator<Item = Result<section::Section, EOF>> {
+    ) -> impl Iterator<Item = Result<section::Section<'b>, EOF>> {
         FixedSizeStructIterator::new(
             byte_order,
             self.sections_buffer,
@@ -68,8 +66,7 @@ impl<'b> IDynamicStruct<'b, { Segment::PARAMS_BUFFER_SIZE }> for Segment<'b> {
     }
 
     fn get_size(&self) -> u32 {
-        (std::mem::size_of::<AsciiString<16>>()
-            + std::mem::size_of::<u64>() * 6
-            + self.sections_buffer.len()) as u32
+        (16 + std::mem::size_of::<u64>() * 6 + self.sections_buffer.len())
+            as u32
     }
 }

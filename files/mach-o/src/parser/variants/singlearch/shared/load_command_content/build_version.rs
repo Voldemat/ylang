@@ -22,7 +22,7 @@ impl BuildToolVersion {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
 }
 
-impl IStaticStruct<{ BuildToolVersion::BUFFER_SIZE }> for BuildToolVersion {
+impl IStaticStruct<'_, { BuildToolVersion::BUFFER_SIZE }> for BuildToolVersion {
     #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {

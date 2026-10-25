@@ -1,4 +1,7 @@
-use crate::{parser::ByteOrder, shared::IDynamicStruct};
+use crate::{
+    parser::{ByteOrder, variants::singlearch::shared::load_command},
+    shared::{EOF, IDynamicStruct},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct RPath<'b> {
@@ -9,6 +12,19 @@ pub struct RPath<'b> {
 impl<'b> RPath<'b> {
     pub const COMMAND_TYPE: u32 = 0x8000001c;
     pub const PARAMS_BUFFER_SIZE: usize = std::mem::size_of::<u32>();
+
+    pub fn get_path(&self) -> Result<&'b std::ffi::CStr, EOF> {
+        (self.path_offset as usize)
+            .checked_sub(
+                std::mem::size_of::<load_command::Header>()
+                    + Self::PARAMS_BUFFER_SIZE,
+            )
+            .and_then(|offset| self.rest_of_the_buffer.get(offset..))
+            .and_then(|buffer| {
+                std::ffi::CStr::from_bytes_until_nul(buffer).ok()
+            })
+            .ok_or(EOF)
+    }
 }
 
 impl<'b> IDynamicStruct<'b, { RPath::PARAMS_BUFFER_SIZE }> for RPath<'b> {

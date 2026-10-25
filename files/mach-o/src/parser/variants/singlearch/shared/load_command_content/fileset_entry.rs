@@ -1,4 +1,7 @@
-use crate::{parser::ByteOrder, shared::IDynamicStruct};
+use crate::{
+    parser::{ByteOrder, variants::singlearch::shared::load_command},
+    shared::{EOF, IDynamicStruct},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct FilesetEntry<'b> {
@@ -13,6 +16,19 @@ impl<'b> FilesetEntry<'b> {
     pub const COMMAND_TYPE: u32 = 0x80000035;
     pub const PARAMS_BUFFER_SIZE: usize =
         std::mem::size_of::<u64>() * 2 + std::mem::size_of::<u32>() * 2;
+
+    pub fn get_entry_id(&self) -> Result<&'b std::ffi::CStr, EOF> {
+        (self.entry_id_offset as usize)
+            .checked_sub(
+                std::mem::size_of::<load_command::Header>()
+                    + Self::PARAMS_BUFFER_SIZE,
+            )
+            .and_then(|offset| self.rest_of_the_buffer.get(offset..))
+            .and_then(|buffer| {
+                std::ffi::CStr::from_bytes_until_nul(buffer).ok()
+            })
+            .ok_or(EOF)
+    }
 }
 
 impl<'b> IDynamicStruct<'b, { FilesetEntry::PARAMS_BUFFER_SIZE }>

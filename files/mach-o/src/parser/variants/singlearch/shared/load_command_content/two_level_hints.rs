@@ -10,7 +10,7 @@ impl TwoLevelHints {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
 }
 
-impl IStaticStruct<{ TwoLevelHints::BUFFER_SIZE }> for TwoLevelHints {
+impl IStaticStruct<'_, { TwoLevelHints::BUFFER_SIZE }> for TwoLevelHints {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {

@@ -20,7 +20,7 @@ impl CompressedLinkEditTable {
     pub const COMMAND_TYPE_ONLY: u32 = 0x80000022;
 }
 
-impl IStaticStruct<{ CompressedLinkEditTable::BUFFER_SIZE }>
+impl IStaticStruct<'_, { CompressedLinkEditTable::BUFFER_SIZE }>
     for CompressedLinkEditTable
 {
     #[allow(clippy::unwrap_used)]

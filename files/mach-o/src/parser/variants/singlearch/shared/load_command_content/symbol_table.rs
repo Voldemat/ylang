@@ -12,7 +12,7 @@ impl SymbolTable {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
 }
 
-impl IStaticStruct<{ SymbolTable::BUFFER_SIZE }> for SymbolTable {
+impl IStaticStruct<'_, { SymbolTable::BUFFER_SIZE }> for SymbolTable {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {

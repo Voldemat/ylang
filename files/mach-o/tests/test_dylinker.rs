@@ -50,6 +50,12 @@ pub fn test_dylinker_file() {
             }
         ))
     );
+    let LoadCommandContent::Shared(SharedLoadCommandContent::Dylinker(c)) =
+        &load_commands[6].content
+    else {
+        panic!("Expected dylinker command");
+    };
+    assert_eq!(c.get_name().unwrap(), c"/usr/lib/dyld");
 
     // LC_UNIXTHREAD with ARM_THREAD_STATE64
     assert_eq!(load_commands[10].header.command_type, 0x5);

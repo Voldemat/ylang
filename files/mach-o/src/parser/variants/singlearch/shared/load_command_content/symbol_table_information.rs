@@ -26,7 +26,7 @@ impl SymbolTableInformation {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
 }
 
-impl IStaticStruct<{ SymbolTableInformation::BUFFER_SIZE }>
+impl IStaticStruct<'_, { SymbolTableInformation::BUFFER_SIZE }>
     for SymbolTableInformation
 {
     #[allow(clippy::unwrap_used)]

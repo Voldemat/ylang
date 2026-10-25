@@ -14,7 +14,7 @@ impl MinimumOSVersion {
     pub const COMMAND_TYPE_TVOS: u32 = 47;
 }
 
-impl IStaticStruct<{ MinimumOSVersion::BUFFER_SIZE }> for MinimumOSVersion {
+impl IStaticStruct<'_, { MinimumOSVersion::BUFFER_SIZE }> for MinimumOSVersion {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {

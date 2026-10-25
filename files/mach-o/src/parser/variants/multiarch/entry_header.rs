@@ -13,7 +13,7 @@ impl EntryHeader {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
 }
 
-impl IStaticStruct<{ EntryHeader::BUFFER_SIZE }> for EntryHeader {
+impl IStaticStruct<'_, { EntryHeader::BUFFER_SIZE }> for EntryHeader {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {

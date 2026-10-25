@@ -13,7 +13,7 @@ impl EncryptionInfo {
     pub const COMMAND_TYPE: u32 = 44;
 }
 
-impl IStaticStruct<{ EncryptionInfo::BUFFER_SIZE }> for EncryptionInfo {
+impl IStaticStruct<'_, { EncryptionInfo::BUFFER_SIZE }> for EncryptionInfo {
     #[allow(clippy::unwrap_used)]
     fn new(
         byte_order: crate::parser::ByteOrder,

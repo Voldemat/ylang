@@ -10,7 +10,7 @@ impl PrebindCksum {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
 }
 
-impl IStaticStruct<{ PrebindCksum::BUFFER_SIZE }> for PrebindCksum {
+impl IStaticStruct<'_, { PrebindCksum::BUFFER_SIZE }> for PrebindCksum {
     #[allow(clippy::unwrap_used)]
     fn new(
         byte_order: ByteOrder,

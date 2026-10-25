@@ -4,19 +4,19 @@ use crate::parser::ByteOrder;
 pub struct EOF;
 
 #[derive(PartialEq, Eq)]
-pub struct AsciiString<const N: usize>(pub [u8; N]);
+pub struct AsciiString<'b, const N: usize>(pub &'b [u8; N]);
 
-impl<const N: usize> std::fmt::Debug for AsciiString<N> {
+impl<'b, const N: usize> std::fmt::Debug for AsciiString<'b, N> {
     #[allow(clippy::unwrap_used)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_ref())
     }
 }
 
-impl<const N: usize> AsRef<str> for AsciiString<N> {
+impl<'b, const N: usize> AsRef<str> for AsciiString<'b, N> {
     #[allow(clippy::unwrap_used)]
-    fn as_ref(&self) -> &str {
-        std::str::from_utf8(&self.0).unwrap()
+    fn as_ref(&self) -> &'b str {
+        std::str::from_utf8(self.0).unwrap()
     }
 }
 
@@ -60,16 +60,17 @@ impl<'b> Iterator for CStringIterator<'b> {
     }
 }
 
-pub trait IStaticStruct<const BUFFER_SIZE: usize> {
-    fn new(byte_order: ByteOrder, buffer: &[u8; BUFFER_SIZE]) -> Self;
+pub trait IStaticStruct<'b, const BUFFER_SIZE: usize>: 'b {
+    fn new(byte_order: ByteOrder, buffer: &'b [u8; BUFFER_SIZE]) -> Self;
 }
 
 pub fn parse_static_struct<
+    'b,
     const BUFFER_SIZE: usize,
-    T: IStaticStruct<BUFFER_SIZE>,
+    T: IStaticStruct<'b, BUFFER_SIZE>,
 >(
     byte_order: ByteOrder,
-    buffer: &[u8],
+    buffer: &'b [u8],
 ) -> Option<T> {
     buffer.try_into().ok().map(|b| T::new(byte_order, b))
 }
@@ -107,7 +108,7 @@ pub struct FixedSizeStructIterator<'b, const BUFFER_SIZE: usize, T> {
     _a: std::marker::PhantomData<T>,
 }
 
-impl<'b, const BUFFER_SIZE: usize, T: IStaticStruct<BUFFER_SIZE>>
+impl<'b, const BUFFER_SIZE: usize, T: IStaticStruct<'b, BUFFER_SIZE>>
     FixedSizeStructIterator<'b, BUFFER_SIZE, T>
 {
     pub fn new(
@@ -125,7 +126,7 @@ impl<'b, const BUFFER_SIZE: usize, T: IStaticStruct<BUFFER_SIZE>>
     }
 }
 
-impl<'b, const BUFFER_SIZE: usize, T: IStaticStruct<BUFFER_SIZE>> Iterator
+impl<'b, const BUFFER_SIZE: usize, T: IStaticStruct<'b, BUFFER_SIZE>> Iterator
     for FixedSizeStructIterator<'b, BUFFER_SIZE, T>
 {
     type Item = Result<T, EOF>;

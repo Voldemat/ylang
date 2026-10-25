@@ -7,7 +7,7 @@ pub mod section;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Segment<'b> {
-    pub segment_name: AsciiString<16>,
+    pub segment_name: AsciiString<'b, 16>,
     pub address: u32,
     pub address_size: u32,
     pub file_offset: u32,
@@ -21,13 +21,12 @@ pub struct Segment<'b> {
 
 impl<'b> Segment<'b> {
     pub const COMMAND_TYPE: u32 = 0x00000001;
-    pub const PARAMS_BUFFER_SIZE: usize =
-        std::mem::size_of::<AsciiString<16>>() + std::mem::size_of::<u32>() * 8;
+    pub const PARAMS_BUFFER_SIZE: usize = 16 + std::mem::size_of::<u32>() * 8;
 
     pub fn parse_sections(
         &self,
         byte_order: ByteOrder,
-    ) -> impl Iterator<Item = Result<section::Section, EOF>> {
+    ) -> impl Iterator<Item = Result<section::Section<'b>, EOF>> {
         FixedSizeStructIterator::new(
             byte_order,
             self.sections_buffer,

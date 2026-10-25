@@ -4,9 +4,9 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct Section {
-    pub section_name: AsciiString<16>,
-    pub segment_name: AsciiString<16>,
+pub struct Section<'b> {
+    pub section_name: AsciiString<'b, 16>,
+    pub segment_name: AsciiString<'b, 16>,
     pub address: u32,
     pub size: u32,
     pub file_offset: u32,
@@ -18,13 +18,16 @@ pub struct Section {
     pub _reserved2: u32,
 }
 
-impl Section {
-    pub const BUFFER_SIZE: usize = std::mem::size_of::<Section>();
+impl Section<'_> {
+    pub const BUFFER_SIZE: usize = 16 * 2 + std::mem::size_of::<u32>() * 9;
 }
 
-impl IStaticStruct<{ Section::BUFFER_SIZE }> for Section {
+impl<'b> IStaticStruct<'b, { Section::BUFFER_SIZE }> for Section<'b> {
     #[allow(clippy::unwrap_used)]
-    fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
+    fn new(
+        byte_order: ByteOrder,
+        buffer: &'b [u8; Section::BUFFER_SIZE],
+    ) -> Self {
         Self {
             section_name: AsciiString(buffer[0..16].try_into().unwrap()),
             segment_name: AsciiString(buffer[16..32].try_into().unwrap()),

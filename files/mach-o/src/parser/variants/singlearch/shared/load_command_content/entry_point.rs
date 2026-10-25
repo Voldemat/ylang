@@ -11,7 +11,7 @@ impl EntryPoint {
     pub const COMMAND_TYPE: u32 = 0x80000028;
 }
 
-impl IStaticStruct<{ EntryPoint::BUFFER_SIZE }> for EntryPoint {
+impl IStaticStruct<'_, { EntryPoint::BUFFER_SIZE }> for EntryPoint {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {

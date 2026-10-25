@@ -10,7 +10,7 @@ impl LinkedIt {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
 }
 
-impl IStaticStruct<{ LinkedIt::BUFFER_SIZE }> for LinkedIt {
+impl IStaticStruct<'_, { LinkedIt::BUFFER_SIZE }> for LinkedIt {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &[u8; Self::BUFFER_SIZE]) -> Self {
         Self {
