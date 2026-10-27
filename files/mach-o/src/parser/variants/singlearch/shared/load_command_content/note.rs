@@ -1,6 +1,6 @@
 use crate::{
-    parser::ByteOrder,
-    shared::{AsciiString, IStaticStruct},
+    parser::{ByteOrder, variants::singlearch::shared::iheader::IHeader},
+    shared::{AsciiString, EOF, IStaticStruct},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -10,9 +10,24 @@ pub struct Note<'b> {
     pub size: u64,
 }
 
-impl Note<'_> {
+impl<'b> Note<'b> {
     pub const BUFFER_SIZE: usize = 16 + std::mem::size_of::<u64>() * 2;
     pub const COMMAND_TYPE: u32 = 0x31;
+
+    pub fn get_payload<THeader: IHeader>(
+        &self,
+        file_buffer: &'b [u8],
+    ) -> Result<&'b [u8], EOF> {
+        self.offset
+            .checked_sub(
+                THeader::BUFFER_SIZE as u64 + std::mem::size_of::<u32>() as u64,
+            )
+            .and_then(|offset| {
+                file_buffer
+                    .get(offset as usize..offset as usize + self.size as usize)
+            })
+            .ok_or(EOF)
+    }
 }
 
 impl<'b> IStaticStruct<'b, { Note::BUFFER_SIZE }> for Note<'b> {

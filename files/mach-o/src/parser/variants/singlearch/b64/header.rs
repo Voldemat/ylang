@@ -1,4 +1,6 @@
-use crate::parser::ByteOrder;
+use crate::parser::{
+    ByteOrder, variants::singlearch::shared::iheader::IHeader,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Header {
@@ -11,11 +13,15 @@ pub struct Header {
     pub _reserved: u32,
 }
 
+impl IHeader for Header {
+    const BUFFER_SIZE: usize = std::mem::size_of::<u32>() * 7;
+}
+
 impl Header {
     #[allow(clippy::indexing_slicing)]
     pub const fn new(
         byte_order: ByteOrder,
-        value: [u8; std::mem::size_of::<Header>()],
+        value: [u8; Self::BUFFER_SIZE],
     ) -> Self {
         let (chunks, []) = value.as_chunks::<4>() else {
             unreachable!()

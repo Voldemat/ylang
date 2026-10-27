@@ -5,7 +5,7 @@ pub fn test_32_bit_big_endian_file() {
     let path = std::path::PathBuf::from(file!())
         .parent()
         .unwrap()
-        .join("sample_32_bit_big_endian");
+        .join("samples/sample_32_bit_big_endian");
     let buffer: Vec<u8> = std::fs::read(path).unwrap();
     let general_file = parser::MachOFile::parse(&buffer).unwrap();
     assert_eq!(general_file.get_byte_order(), ByteOrder::BigEndian);

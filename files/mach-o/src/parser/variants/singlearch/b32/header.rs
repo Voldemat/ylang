@@ -1,4 +1,6 @@
-use crate::parser::ByteOrder;
+use crate::parser::{
+    ByteOrder, variants::singlearch::shared::iheader::IHeader,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Header {
@@ -8,6 +10,10 @@ pub struct Header {
     pub load_commands_count: u32,
     pub load_commands_size: u32,
     pub flags: u32,
+}
+
+impl IHeader for Header {
+    const BUFFER_SIZE: usize = std::mem::size_of::<u32>() * 6;
 }
 
 impl Header {

@@ -13,7 +13,7 @@ pub fn test_reexport_dylib_file() {
     let path = std::path::PathBuf::from(file!())
         .parent()
         .unwrap()
-        .join("sample_reexport_dylib");
+        .join("samples/sample_reexport_dylib");
     let buffer: Vec<u8> = std::fs::read(path).unwrap();
     let general_file = parser::MachOFile::parse(&buffer).unwrap();
     assert_eq!(general_file.get_byte_order(), ByteOrder::LittleEndian);

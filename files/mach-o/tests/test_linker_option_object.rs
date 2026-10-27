@@ -11,7 +11,7 @@ pub fn test_linker_option_object_file() {
     let path = std::path::PathBuf::from(file!())
         .parent()
         .unwrap()
-        .join("sample_linker_option_object");
+        .join("samples/sample_linker_option_object");
     let buffer: Vec<u8> = std::fs::read(path).unwrap();
     let general_file = parser::MachOFile::parse(&buffer).unwrap();
     assert_eq!(general_file.get_byte_order(), ByteOrder::LittleEndian);

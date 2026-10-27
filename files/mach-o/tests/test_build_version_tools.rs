@@ -13,7 +13,7 @@ pub fn test_build_version_tools_file() {
     let path = std::path::PathBuf::from(file!())
         .parent()
         .unwrap()
-        .join("sample_build_version_tools");
+        .join("samples/sample_build_version_tools");
     let buffer: Vec<u8> = std::fs::read(path).unwrap();
     let general_file = parser::MachOFile::parse(&buffer).unwrap();
     assert_eq!(general_file.get_byte_order(), ByteOrder::LittleEndian);

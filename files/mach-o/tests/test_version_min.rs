@@ -57,7 +57,7 @@ fn check_file(
 #[test]
 pub fn test_version_min_macos_file() {
     check_file(
-        "sample_version_min_macos",
+        "samples/sample_version_min_macos",
         8,
         MinimumOSVersion::COMMAND_TYPE_MACOSX,
         MinimumOSVersion {
@@ -70,7 +70,7 @@ pub fn test_version_min_macos_file() {
 #[test]
 pub fn test_version_min_ios_file() {
     check_file(
-        "sample_version_min_ios",
+        "samples/sample_version_min_ios",
         13,
         MinimumOSVersion::COMMAND_TYPE_IPHONEOS,
         MinimumOSVersion {
@@ -83,7 +83,7 @@ pub fn test_version_min_ios_file() {
 #[test]
 pub fn test_version_min_tvos_file() {
     check_file(
-        "sample_version_min_tvos",
+        "samples/sample_version_min_tvos",
         13,
         MinimumOSVersion::COMMAND_TYPE_TVOS,
         MinimumOSVersion {
@@ -96,7 +96,7 @@ pub fn test_version_min_tvos_file() {
 #[test]
 pub fn test_version_min_watchos_file() {
     check_file(
-        "sample_version_min_watchos",
+        "samples/sample_version_min_watchos",
         13,
         MinimumOSVersion::COMMAND_TYPE_WATCHOS,
         MinimumOSVersion {
