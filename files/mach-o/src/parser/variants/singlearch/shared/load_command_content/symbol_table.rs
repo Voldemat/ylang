@@ -24,11 +24,9 @@ impl SymbolTable {
         file_buffer: &'b [u8],
     ) -> Result<impl Iterator<Item = Result<THeader::SymbolStruct<'b>, EOF>>, EOF>
     {
-        self.symbols_offset
-            .checked_sub(
-                THeader::BUFFER_SIZE as u32 + std::mem::size_of::<u32>() as u32,
-            )
-            .and_then(|offset| file_buffer.get(offset as usize..))
+        (self.symbols_offset as usize)
+            .checked_sub(THeader::BUFFER_SIZE + std::mem::size_of::<u32>())
+            .and_then(|offset| file_buffer.get(offset..))
             .map(|buffer| {
                 FixedSizeStructIterator::new(
                     byte_order,
