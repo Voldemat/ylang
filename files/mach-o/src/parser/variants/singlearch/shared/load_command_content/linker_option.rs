@@ -15,7 +15,7 @@ impl<'b> LinkerOption<'b> {
     pub fn get_strings(
         &self,
     ) -> impl Iterator<Item = Result<&'b std::ffi::CStr, EOF>> {
-        CStringIterator::new(self.strings_buffer, self.count as usize)
+        CStringIterator::new(self.strings_buffer, Some(self.count as usize))
     }
 }
 

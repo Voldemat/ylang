@@ -1,5 +1,6 @@
 pub mod header;
 pub mod load_command;
+pub mod symbol;
 
 use crate::{parser::shared::ByteOrder, shared::EOF};
 
@@ -35,15 +36,6 @@ impl<'b> IFile<'b> for File<'b> {
     fn get_load_commands_size(&self) -> u32 {
         self.header.load_commands_size
     }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct Symbol {
-    pub name_offset: u32,
-    pub symbol_type: u8,
-    pub section_number: u8,
-    pub data_info: u16,
-    pub symbol_address: u64,
 }
 
 impl<'b> File<'b> {

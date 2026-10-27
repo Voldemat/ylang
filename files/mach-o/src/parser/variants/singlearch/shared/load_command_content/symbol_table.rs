@@ -1,4 +1,7 @@
-use crate::{parser::ByteOrder, shared::IStaticStruct};
+use crate::{
+    parser::{ByteOrder, variants::singlearch::shared::iheader::IHeader},
+    shared::{CStringIterator, EOF, FixedSizeStructIterator, IStaticStruct},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct SymbolTable {
@@ -10,6 +13,54 @@ pub struct SymbolTable {
 
 impl SymbolTable {
     pub const BUFFER_SIZE: usize = std::mem::size_of::<Self>();
+
+    pub fn get_symbols<
+        'b,
+        const SYMBOL_STRUCT_BUFFER_SIZE: usize,
+        THeader: IHeader<SYMBOL_STRUCT_BUFFER_SIZE>,
+    >(
+        &self,
+        byte_order: ByteOrder,
+        file_buffer: &'b [u8],
+    ) -> Result<impl Iterator<Item = Result<THeader::SymbolStruct<'b>, EOF>>, EOF>
+    {
+        self.symbols_offset
+            .checked_sub(
+                THeader::BUFFER_SIZE as u32 + std::mem::size_of::<u32>() as u32,
+            )
+            .and_then(|offset| file_buffer.get(offset as usize..))
+            .map(|buffer| {
+                FixedSizeStructIterator::new(
+                    byte_order,
+                    buffer,
+                    self.symbols_count as usize,
+                )
+            })
+            .ok_or(EOF)
+    }
+
+    pub fn get_strings<
+        'b,
+        const SYMBOL_STRUCT_BUFFER_SIZE: usize,
+        THeader: IHeader<SYMBOL_STRUCT_BUFFER_SIZE>,
+    >(
+        &self,
+        file_buffer: &'b [u8],
+    ) -> Result<impl Iterator<Item = Result<&'b std::ffi::CStr, EOF>>, EOF>
+    {
+        self.string_table_offset
+            .checked_sub(
+                THeader::BUFFER_SIZE as u32 + std::mem::size_of::<u32>() as u32,
+            )
+            .and_then(|offset| {
+                file_buffer.get(
+                    offset as usize
+                        ..offset as usize + self.string_table_size as usize,
+                )
+            })
+            .map(|buffer| CStringIterator::new(buffer, None))
+            .ok_or(EOF)
+    }
 }
 
 impl IStaticStruct<'_, { SymbolTable::BUFFER_SIZE }> for SymbolTable {

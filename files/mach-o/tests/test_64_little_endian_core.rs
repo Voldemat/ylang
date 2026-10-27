@@ -36,7 +36,7 @@ pub fn test_64_bit_little_endian_core() {
         panic!("Expected first command to be note load command");
     };
     let note_payload = first_command
-        .get_payload::<parser::variants::singlearch::b64::header::Header>(
+        .get_payload::<{parser::variants::singlearch::b64::symbol::Symbol::BUFFER_SIZE}, parser::variants::singlearch::b64::header::Header>(
             file.rest_of_the_buffer,
         )
         .unwrap();

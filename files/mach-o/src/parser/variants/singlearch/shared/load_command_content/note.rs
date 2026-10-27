@@ -14,7 +14,7 @@ impl<'b> Note<'b> {
     pub const BUFFER_SIZE: usize = 16 + std::mem::size_of::<u64>() * 2;
     pub const COMMAND_TYPE: u32 = 0x31;
 
-    pub fn get_payload<THeader: IHeader>(
+    pub fn get_payload<const S: usize, THeader: IHeader<S>>(
         &self,
         file_buffer: &'b [u8],
     ) -> Result<&'b [u8], EOF> {

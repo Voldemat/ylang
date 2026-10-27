@@ -23,12 +23,12 @@ impl<'b, const N: usize> AsRef<str> for AsciiString<'b, N> {
 pub struct CStringIterator<'b> {
     buffer: &'b [u8],
     offset: usize,
-    max_count: usize,
+    max_count: Option<usize>,
     count: usize,
 }
 
 impl<'b> CStringIterator<'b> {
-    pub fn new(buffer: &'b [u8], max_count: usize) -> Self {
+    pub fn new(buffer: &'b [u8], max_count: Option<usize>) -> Self {
         Self {
             buffer,
             offset: 0,
@@ -42,16 +42,28 @@ impl<'b> Iterator for CStringIterator<'b> {
     type Item = Result<&'b std::ffi::CStr, EOF>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.count == self.max_count {
-            return None;
-        };
+        if let Some(max_count) = self.max_count {
+            if self.count == max_count {
+                return None;
+            }
+        } else {
+            if self.offset == self.buffer.len() {
+                return None;
+            }
+        }
         let Some(current_buffer) = self.buffer.get(self.offset..) else {
             self.offset = self.buffer.len();
+            if let Some(max_count) = self.max_count {
+                self.count = max_count
+            }
             return Some(Err(EOF));
         };
         let Ok(cstring) = std::ffi::CStr::from_bytes_until_nul(current_buffer)
         else {
             self.offset = self.buffer.len();
+            if let Some(max_count) = self.max_count {
+                self.count = max_count
+            }
             return Some(Err(EOF));
         };
         self.offset += cstring.count_bytes() + 1;

@@ -13,6 +13,13 @@ impl ByteOrder {
         }
     }
 
+    pub const fn read_u16(&self, buffer: [u8; 2]) -> u16 {
+        match self {
+            ByteOrder::BigEndian => u16::from_be_bytes(buffer),
+            ByteOrder::LittleEndian => u16::from_le_bytes(buffer),
+        }
+    }
+
     pub const fn read_u32(&self, buffer: [u8; 4]) -> u32 {
         match self {
             ByteOrder::BigEndian => u32::from_be_bytes(buffer),

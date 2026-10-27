@@ -2,6 +2,8 @@ use crate::parser::{
     ByteOrder, variants::singlearch::shared::iheader::IHeader,
 };
 
+use super::symbol::Symbol;
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Header {
     pub cpu_type: u32,
@@ -12,8 +14,9 @@ pub struct Header {
     pub flags: u32,
 }
 
-impl IHeader for Header {
+impl IHeader<{ Symbol::BUFFER_SIZE }> for Header {
     const BUFFER_SIZE: usize = std::mem::size_of::<u32>() * 6;
+    type SymbolStruct<'b> = Symbol;
 }
 
 impl Header {
