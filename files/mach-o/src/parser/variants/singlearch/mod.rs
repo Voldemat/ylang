@@ -30,7 +30,9 @@ impl<'b> File<'b> {
             b64::File::MAGIC_VALUE => b64::File::parse(byte_order, buffer)
                 .map(File::B64)
                 .map_err(|e| e.into()),
-            _ => Err(ParseError::UnknownMagicValue),
+            _ => {
+                Err(ParseError::UnknownMagicValue(byte_order.encode_u32(magic)))
+            }
         }
     }
 
@@ -52,7 +54,7 @@ impl<'b> File<'b> {
             buffer,
         )
         .or_else(|e| {
-            if ParseError::UnknownMagicValue == e {
+            if let ParseError::UnknownMagicValue(_) = e {
                 Self::parse_with_magic_and_byte_order(
                     magic_big_endian.swap_bytes(),
                     ByteOrder::LittleEndian,

@@ -9,7 +9,11 @@ pub fn test_64_bit_little_endian_file() {
     let buffer: Vec<u8> = std::fs::read(path).unwrap();
     let general_file = parser::MachOFile::parse(&buffer).unwrap();
     assert_eq!(general_file.get_byte_order(), ByteOrder::BigEndian);
-    let parser::MachOFile::MultiArch(file) = general_file else {
+    println!("{:?}", general_file);
+    let parser::MachOFile::MultiArch(parser::variants::multiarch::File::B32(
+        file,
+    )) = general_file
+    else {
         panic!("Expected multi arch file");
     };
     assert_eq!(file.header.binaries_count, 2);
@@ -19,7 +23,7 @@ pub fn test_64_bit_little_endian_file() {
         .unwrap();
     assert_eq!(
         entries[0],
-        parser::variants::multiarch::EntryHeader {
+        parser::variants::multiarch::b32::EntryHeader {
             cpu_type: 16777223,
             cpu_subtype: 3,
             file_offset: 16384,
@@ -29,7 +33,7 @@ pub fn test_64_bit_little_endian_file() {
     );
     assert_eq!(
         entries[1],
-        parser::variants::multiarch::EntryHeader {
+        parser::variants::multiarch::b32::EntryHeader {
             cpu_type: 16777228,
             cpu_subtype: 2147483650,
             file_offset: 49152,

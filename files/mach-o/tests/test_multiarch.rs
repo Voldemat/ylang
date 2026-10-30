@@ -9,7 +9,10 @@ pub fn test_multiarch_file() {
     let buffer: Vec<u8> = std::fs::read(path).unwrap();
     let general_file = parser::MachOFile::parse(&buffer).unwrap();
     assert_eq!(general_file.get_byte_order(), ByteOrder::BigEndian);
-    let parser::MachOFile::MultiArch(file) = general_file else {
+    let parser::MachOFile::MultiArch(parser::variants::multiarch::File::B32(
+        file,
+    )) = general_file
+    else {
         panic!("Expected multiarch file");
     };
     assert_eq!(file.header.binaries_count, 2);

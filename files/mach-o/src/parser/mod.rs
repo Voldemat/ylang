@@ -12,7 +12,7 @@ pub enum MachOFile<'b> {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
-    UnknownMagicValue,
+    UnknownMagicValue([u8; 4]),
     EOF,
 }
 
@@ -34,15 +34,24 @@ impl<'b> MachOFile<'b> {
         let (magic_buffer, rest_of_the_buffer) =
             buffer.split_first_chunk::<4>().ok_or(ParseError::EOF)?;
         let magic_big_endian = u32::from_be_bytes(*magic_buffer);
-        if magic_big_endian == variants::multiarch::File::MAGIC_VALUE_BE {
-            return variants::multiarch::File::parse(rest_of_the_buffer)
-                .map(MachOFile::MultiArch)
-                .map_err(|e| e.into());
-        };
-        variants::singlearch::File::try_parse_both_orders_from_be(
+        match variants::multiarch::File::parse_with_magic(
             magic_big_endian,
             rest_of_the_buffer,
         )
-        .map(Self::Singlearch)
+        .map(MachOFile::MultiArch)
+        {
+            Ok(f) => Ok(f),
+            Err(e) => {
+                if let ParseError::UnknownMagicValue(_) = e {
+                    variants::singlearch::File::try_parse_both_orders_from_be(
+                        magic_big_endian,
+                        rest_of_the_buffer,
+                    )
+                    .map(Self::Singlearch)
+                } else {
+                    Err(e)
+                }
+            }
+        }
     }
 }
