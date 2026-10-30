@@ -1,0 +1,50 @@
+use crate::{
+    parser::{ByteOrder, variants::singlearch::shared::load_command},
+    shared::{EOF, IDynamicStruct},
+};
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Fvmfile<'b> {
+    pub name_offset: u32,
+    pub header_addr: u32,
+    pub rest_of_the_buffer: &'b [u8],
+}
+
+impl<'b> Fvmfile<'b> {
+    pub const COMMAND_TYPE: u32 = 0x9;
+    pub const PARAMS_BUFFER_SIZE: usize = std::mem::size_of::<u32>() * 2;
+
+    pub fn get_name(&self) -> Result<&'b std::ffi::CStr, EOF> {
+        (self.name_offset as usize)
+            .checked_sub(
+                std::mem::size_of::<load_command::Header>()
+                    + Self::PARAMS_BUFFER_SIZE,
+            )
+            .and_then(|offset| self.rest_of_the_buffer.get(offset..))
+            .and_then(|buffer| {
+                std::ffi::CStr::from_bytes_until_nul(buffer).ok()
+            })
+            .ok_or(EOF)
+    }
+}
+
+impl<'b> IDynamicStruct<'b, { Fvmfile::PARAMS_BUFFER_SIZE }> for Fvmfile<'b> {
+    #[allow(clippy::unwrap_used)]
+    fn new(
+        byte_order: ByteOrder,
+        params_buffer: &[u8; Fvmfile::PARAMS_BUFFER_SIZE],
+        rest_of_the_buffer: &'b [u8],
+    ) -> Self {
+        Self {
+            name_offset: byte_order
+                .read_u32(params_buffer[0..4].try_into().unwrap()),
+            header_addr: byte_order
+                .read_u32(params_buffer[4..8].try_into().unwrap()),
+            rest_of_the_buffer,
+        }
+    }
+
+    fn get_size(&self) -> u32 {
+        (Self::PARAMS_BUFFER_SIZE + self.rest_of_the_buffer.len()) as u32
+    }
+}

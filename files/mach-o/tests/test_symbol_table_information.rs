@@ -41,7 +41,7 @@ pub fn test_symbol_table_information_32_bit_big_endian() {
     // LC_DYSYMTAB
     assert_eq!(load_commands[9].header.command_type, 0xB);
     assert_eq!(load_commands[9].header.command_size, 80);
-    let b32::load_command::LoadCommandContent::Shared(
+    let b32::load_command_content::LoadCommandContent::Shared(
         SharedLoadCommandContent::SymbolTableInformation(information),
     ) = &load_commands[9].content
     else {
@@ -161,7 +161,7 @@ pub fn test_symbol_table_information_no_fixup_chains() {
         .unwrap();
 
     // LC_SYMTAB
-    let b64::load_command::LoadCommandContent::Shared(
+    let b64::load_command_content::LoadCommandContent::Shared(
         SharedLoadCommandContent::SymbolTable(symbol_table),
     ) = &load_commands[6].content
     else {
@@ -178,7 +178,7 @@ pub fn test_symbol_table_information_no_fixup_chains() {
     );
 
     // LC_DYSYMTAB
-    let b64::load_command::LoadCommandContent::Shared(
+    let b64::load_command_content::LoadCommandContent::Shared(
         SharedLoadCommandContent::SymbolTableInformation(information),
     ) = &load_commands[7].content
     else {

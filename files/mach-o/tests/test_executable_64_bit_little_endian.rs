@@ -30,7 +30,7 @@ pub fn test_64_bit_little_endian_file() {
         load_commands.len(),
         file.header.load_commands_count as usize
     );
-    let parser::variants::singlearch::b64::load_command::LoadCommandContent::Segment(
+    let parser::variants::singlearch::b64::load_command_content::LoadCommandContent::Segment(
         first_command,
     ) = &load_commands[0].content
     else {
@@ -45,7 +45,7 @@ pub fn test_64_bit_little_endian_file() {
         0
     );
 
-    let parser::variants::singlearch::b64::load_command::LoadCommandContent::Segment(
+    let parser::variants::singlearch::b64::load_command_content::LoadCommandContent::Segment(
         second_command,
     ) = &load_commands[1].content
     else {
@@ -100,7 +100,7 @@ pub fn test_64_bit_little_endian_file() {
             .count(),
         0
     );
-    let parser::variants::singlearch::b64::load_command::LoadCommandContent::Segment(
+    let parser::variants::singlearch::b64::load_command_content::LoadCommandContent::Segment(
         third_command,
     ) = &load_commands[2].content
     else {

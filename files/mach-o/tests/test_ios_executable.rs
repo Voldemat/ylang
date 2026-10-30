@@ -1,7 +1,7 @@
 use macho::parser::{
     self, ByteOrder,
     variants::singlearch::{
-        b64::load_command::{
+        b64::load_command_content::{
             LoadCommandContent, encryption_info::EncryptionInfo,
         },
         shared::load_command_content::{

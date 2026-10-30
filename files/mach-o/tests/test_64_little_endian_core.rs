@@ -30,7 +30,7 @@ pub fn test_64_bit_little_endian_core() {
         load_commands.len(),
         file.header.load_commands_count as usize
     );
-    let parser::variants::singlearch::b64::load_command::LoadCommandContent::Shared(
+    let parser::variants::singlearch::b64::load_command_content::LoadCommandContent::Shared(
         parser::variants::singlearch::shared::load_command_content::SharedLoadCommandContent::Note(first_command)) = &load_commands[0].content
     else {
         panic!("Expected first command to be note load command");

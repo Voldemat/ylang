@@ -1,4 +1,5 @@
 pub mod encryption_info;
+pub mod routines;
 pub mod segment;
 
 use crate::{
@@ -17,6 +18,7 @@ use crate::{
 pub enum LoadCommandContent<'b> {
     Segment(segment::Segment<'b>),
     EncryptionInfo(encryption_info::EncryptionInfo),
+    Routines(routines::Routines),
     Shared(SharedLoadCommandContent<'b>),
 }
 
@@ -28,6 +30,7 @@ impl<'b> ILoadCommandContent<'b> for LoadCommandContent<'b> {
                 encryption_info::EncryptionInfo::BUFFER_SIZE as u32
             }
             Self::Shared(c) => c.get_size(),
+            Self::Routines(_) => routines::Routines::BUFFER_SIZE as u32,
         }
     }
 
@@ -41,6 +44,11 @@ impl<'b> ILoadCommandContent<'b> for LoadCommandContent<'b> {
                 parse_dynamic_struct(byte_order, buffer)
                     .ok_or(ParseError::EOF)
                     .map(Self::Segment)
+            }
+            routines::Routines::COMMAND_TYPE => {
+                parse_static_struct(byte_order, buffer)
+                    .ok_or(ParseError::EOF)
+                    .map(Self::Routines)
             }
             encryption_info::EncryptionInfo::COMMAND_TYPE => {
                 parse_static_struct(byte_order, buffer)

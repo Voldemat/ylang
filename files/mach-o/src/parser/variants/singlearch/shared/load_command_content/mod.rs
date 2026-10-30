@@ -3,12 +3,16 @@ pub mod compressed_link_edit_table;
 pub mod dylinker;
 pub mod entry_point;
 pub mod fileset_entry;
+pub mod fvmfile;
+pub mod fvmlib;
+pub mod ident;
 pub mod link_library;
 pub mod linked_it;
 pub mod linker_option;
 pub mod minimum_os_version;
 pub mod note;
 pub mod prebind_cksum;
+pub mod prebound_dylib;
 pub mod rpath;
 pub mod source_version;
 pub mod symbol_table;
@@ -46,6 +50,10 @@ pub enum SharedLoadCommandContent<'b> {
     FilesetEntry(fileset_entry::FilesetEntry<'b>),
     RPath(rpath::RPath<'b>),
     PrebindCksum(prebind_cksum::PrebindCksum),
+    Fvmlib(fvmlib::Fvmlib<'b>),
+    Ident(ident::Ident<'b>),
+    Fvmfile(fvmfile::Fvmfile<'b>),
+    PreboundDylib(prebound_dylib::PreboundDylib<'b>),
 }
 
 impl<'b> SharedLoadCommandContent<'b> {
@@ -89,6 +97,10 @@ impl<'b> SharedLoadCommandContent<'b> {
             Self::PrebindCksum(_) => {
                 prebind_cksum::PrebindCksum::BUFFER_SIZE as u32
             }
+            Self::Fvmlib(c) => c.get_size(),
+            Self::Ident(c) => c.get_size(),
+            Self::Fvmfile(c) => c.get_size(),
+            Self::PreboundDylib(c) => c.get_size(),
         }
     }
 
@@ -103,6 +115,23 @@ impl<'b> SharedLoadCommandContent<'b> {
                     .ok_or(ParseError::EOF)
                     .map(Self::LinkLibrary)
             }
+            prebound_dylib::PreboundDylib::COMMAND_TYPE =>
+                parse_dynamic_struct(byte_order, buffer)
+                    .ok_or(ParseError::EOF)
+                    .map(Self::PreboundDylib),
+            fvmfile::Fvmfile::COMMAND_TYPE =>
+                parse_dynamic_struct(byte_order, buffer)
+                    .ok_or(ParseError::EOF)
+                    .map(Self::Fvmfile),
+            ident::Ident::COMMAND_TYPE =>
+                parse_dynamic_struct(byte_order, buffer)
+                    .ok_or(ParseError::EOF)
+                    .map(Self::Ident),
+            fvmlib::Fvmlib::COMMAND_TYPE_LOADFVMLIB |
+                fvmlib::Fvmlib::COMMAND_TYPE_LC_IDFVMLIB =>
+                parse_dynamic_struct(byte_order, buffer)
+                    .ok_or(ParseError::EOF)
+                    .map(Self::Fvmlib),
             prebind_cksum::PrebindCksum::COMMAND_TYPE => {
                 parse_static_struct(byte_order, buffer)
                     .ok_or(ParseError::EOF)

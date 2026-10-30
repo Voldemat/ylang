@@ -1,7 +1,7 @@
 use macho::parser::{
     self, ByteOrder,
     variants::singlearch::{
-        b64::load_command::LoadCommandContent,
+        b64::load_command_content::LoadCommandContent,
         shared::load_command_content::{
             SharedLoadCommandContent, dylinker::Dylinker, linked_it::LinkedIt,
         },

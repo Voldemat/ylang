@@ -2,7 +2,8 @@ use macho::parser::{
     self, ByteOrder,
     variants::singlearch::{
         b64::{
-            header::Header, load_command::LoadCommandContent, symbol::Symbol,
+            header::Header, load_command_content::LoadCommandContent,
+            symbol::Symbol,
         },
         shared::load_command_content::SharedLoadCommandContent,
     },

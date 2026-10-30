@@ -31,7 +31,7 @@ pub fn test_32_bit_big_endian_file() {
         file.header.load_commands_count as usize
     );
 
-    let parser::variants::singlearch::b32::load_command::LoadCommandContent::Segment(
+    let parser::variants::singlearch::b32::load_command_content::LoadCommandContent::Segment(
         segment1,
     ) = &load_commands[0].content
     else {
