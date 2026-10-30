@@ -98,7 +98,7 @@ impl<'b> SharedLoadCommandContent<'b> {
         buffer: &'b [u8],
     ) -> Result<Self, ParseError> {
         match command_type {
-            0x0000000C | 0x0000000D | 0x80000018 | 0x8000001F => {
+            0x0000000C | 0x0000000D | 0x80000018 | 0x8000001F | 0x8000023 | 0x20 => {
                 parse_dynamic_struct(byte_order, buffer)
                     .ok_or(ParseError::EOF)
                     .map(Self::LinkLibrary)
@@ -136,11 +136,11 @@ impl<'b> SharedLoadCommandContent<'b> {
             42 => parse_static_struct(byte_order, buffer)
                 .ok_or(ParseError::EOF)
                 .map(Self::SourceVersion),
-            14 | 15 | 39 =>
+            14 | 15 | 39 | 0x12 | 0x13 | 0x15 | 0x39 =>
                 parse_dynamic_struct(byte_order, buffer)
                 .ok_or(ParseError::EOF)
                 .map(Self::Dylinker),
-            0x80000034 | 0x80000033 | 43 | 41 | 30 | 38 | 29 =>
+            0x80000034 | 0x3 | 0x80000033 | 43 | 41 | 30 | 38 | 29 | 0x2E | 0x36 | 0x37 | 0x38 | 0x3A =>
                 parse_static_struct(byte_order, buffer)
                 .ok_or(ParseError::EOF)
                 .map(Self::LinkedIt),
