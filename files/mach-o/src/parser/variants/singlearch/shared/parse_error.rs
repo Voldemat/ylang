@@ -3,6 +3,7 @@ use crate::shared::EOF;
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     EOF,
+    ExpectedEmptyBuffer(usize),
     UnknownLoadCommandType(u32),
 }
 

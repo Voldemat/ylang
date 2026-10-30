@@ -58,7 +58,7 @@ impl<'f, 'b, TFile: IFile<'b>, TLoadCommandContent: ILoadCommandContent<'b>>
         };
         let command_header =
             Header::new(self.file.get_byte_order(), header_buffer);
-        if command_header.command_size <= std::mem::size_of::<Header>() as u32 {
+        if command_header.command_size < std::mem::size_of::<Header>() as u32 {
             self.count = self.file.get_load_commands_count();
             return Some(Err(ParseError::EOF));
         }

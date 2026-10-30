@@ -34,10 +34,12 @@ impl<'b> PreboundDylib<'b> {
                 std::mem::size_of::<load_command::Header>()
                     + Self::PARAMS_BUFFER_SIZE,
             )
-            .and_then(|offset| {
-                self.rest_of_the_buffer
-                    .get(offset..self.modules_count.div_ceil(8) as usize)
+            .and_then(|start_offset| {
+                start_offset
+                    .checked_add(self.modules_count.div_ceil(8) as usize)
+                    .map(|end_offset| start_offset..end_offset)
             })
+            .and_then(|offset_range| self.rest_of_the_buffer.get(offset_range))
             .ok_or(EOF)
     }
 }

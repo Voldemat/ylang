@@ -43,7 +43,6 @@ pub enum SharedLoadCommandContent<'b> {
     TwoLevelHints(two_level_hints::TwoLevelHints),
     Thread(&'b [u8]),
     UnixThread(&'b [u8]),
-    SubClient(&'b [u8]),
     Note(note::Note<'b>),
     LinkerOption(linker_option::LinkerOption<'b>),
     BuildVersion(build_version::BuildVersion<'b>),
@@ -54,11 +53,13 @@ pub enum SharedLoadCommandContent<'b> {
     Ident(ident::Ident<'b>),
     Fvmfile(fvmfile::Fvmfile<'b>),
     PreboundDylib(prebound_dylib::PreboundDylib<'b>),
+    Prepage,
 }
 
 impl<'b> SharedLoadCommandContent<'b> {
     pub fn get_size(&self) -> u32 {
         match self {
+            Self::Prepage => 0,
             Self::LinkLibrary(c) => c.get_size(),
             Self::SymbolTable(_) => {
                 symbol_table::SymbolTable::BUFFER_SIZE as u32
@@ -88,7 +89,6 @@ impl<'b> SharedLoadCommandContent<'b> {
             }
             Self::Thread(c) => c.len() as u32,
             Self::UnixThread(c) => c.len() as u32,
-            Self::SubClient(c) => c.len() as u32,
             Self::Note(_) => note::Note::BUFFER_SIZE as u32,
             Self::LinkerOption(c) => c.get_size(),
             Self::BuildVersion(c) => c.get_size(),
@@ -110,7 +110,7 @@ impl<'b> SharedLoadCommandContent<'b> {
         buffer: &'b [u8],
     ) -> Result<Self, ParseError> {
         match command_type {
-            0x0000000C | 0x0000000D | 0x80000018 | 0x8000001F | 0x8000023 | 0x20 => {
+            0x0000000C | 0x0000000D | 0x80000018 | 0x8000001F | 0x80000023 | 0x20 => {
                 parse_dynamic_struct(byte_order, buffer)
                     .ok_or(ParseError::EOF)
                     .map(Self::LinkLibrary)
@@ -158,14 +158,13 @@ impl<'b> SharedLoadCommandContent<'b> {
                     .map(Self::Note),
             4 => Ok(Self::Thread(buffer)),
             5 => Ok(Self::UnixThread(buffer)),
-            20 => Ok(Self::SubClient(buffer)),
             22 => parse_static_struct(byte_order, buffer)
                 .ok_or(ParseError::EOF)
                 .map(Self::TwoLevelHints),
             42 => parse_static_struct(byte_order, buffer)
                 .ok_or(ParseError::EOF)
                 .map(Self::SourceVersion),
-            14 | 15 | 39 | 0x12 | 0x13 | 0x15 | 0x39 =>
+            14 | 15 | 20 | 39 | 0x12 | 0x13 | 0x15 | 0x39 =>
                 parse_dynamic_struct(byte_order, buffer)
                 .ok_or(ParseError::EOF)
                 .map(Self::Dylinker),
@@ -199,6 +198,11 @@ impl<'b> SharedLoadCommandContent<'b> {
                 minimum_os_version::MinimumOSVersion::COMMAND_TYPE_IPHONEOS =>
                 parse_static_struct(byte_order, buffer).ok_or(ParseError::EOF)
                     .map(Self::MinimumOSVersion),
+            0xA => if buffer.is_empty() {
+                Ok(Self::Prepage)
+            } else {
+                Err(ParseError::ExpectedEmptyBuffer(buffer.len()))
+            },
             unknown_command_type => {
                 Err(ParseError::UnknownLoadCommandType(unknown_command_type))
             }
