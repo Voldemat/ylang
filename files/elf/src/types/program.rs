@@ -1,8 +1,8 @@
 use core::mem::size_of;
 use zerocopy::byteorder::{ByteOrder, LittleEndian, U32, U64};
-use zerocopy::{FromBytes,Immutable,KNownLayout,Unaligned};
+use zerocopy::{FromBytes, Immutable, KnownLayout, Unaligned};
 use crate::types::flags::SegmentFlags;
-// типы сегментов 
+//segment types
 pub const PT_NULL: u32 = 0;
 pub const PT_LOAD: u32 = 1;
 pub const PT_DYNAMIC: u32 = 2;
@@ -11,7 +11,7 @@ pub const PT_NOTE: u32 = 4;
 pub const PT_SHLIB: u32 = 5;
 pub const PT_PHDR: u32 = 6;
 pub const PT_TLS: u32 = 7;
-// диапазон под ОС и процессор 
+//range
 pub const PT_LOOS: u32 = 0x6000_0000;
 pub const PT_HIOS: u32 = 0x6fff_ffff;
 pub const PT_LOPROC: u32 = 0x7000_0000;
