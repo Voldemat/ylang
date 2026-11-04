@@ -1,0 +1,55 @@
+name: main
+
+on:
+  push:
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      shared: ${{ steps.filter.outputs.shared }}
+      files_macho: ${{ steps.filter.outputs.files_macho }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Check for file changes
+      id: filter
+      uses: dorny/paths-filter@v4
+      with:
+        filters: |
+          shared:
+          - 'shared/**'
+          - '.github/actions/shared/action.yaml'
+          - '.github/workflows/main.yaml'
+          files_macho:
+          - 'files/mach-o/**'
+          - '.github/actions/files/mach-o/action.yaml'
+          - '.github/workflows/main.yaml'
+
+  shared:
+    needs: check-changes
+    runs-on: ubuntu-latest
+    if: ${{ needs.check-changes.outputs.shared == 'true' || github.ref_type == 'tag' }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Install Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+    - name: Call action
+      uses: ./.github/actions/shared
+
+  files-macho:
+    needs: check-changes
+    runs-on: ubuntu-latest
+    if: ${{ needs.check-changes.outputs.files_macho == 'true' || github.ref_type == 'tag' }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Install Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+    - name: Call action
+      uses: ./.github/actions/files/mach-o

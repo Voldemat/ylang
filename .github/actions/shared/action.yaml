@@ -1,0 +1,10 @@
+name: "shared-mach-o"
+description: ""
+
+runs:
+  using: composite
+  steps:
+  - name: Build
+    working-directory: shared
+    shell: sh
+    run: cargo clippy --profile release

@@ -1,0 +1,14 @@
+name: "files-mach-o"
+description: ""
+
+runs:
+  using: composite
+  steps:
+  - name: Build
+    working-directory: files/mach-o
+    shell: sh
+    run: cargo clippy --profile release
+  - name: Test
+    working-directory: files/mach-o
+    shell: sh
+    run: cargo test --profile release
