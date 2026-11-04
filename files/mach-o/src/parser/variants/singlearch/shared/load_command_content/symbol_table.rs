@@ -1,7 +1,11 @@
-use crate::{
-    parser::{ByteOrder, variants::singlearch::shared::iheader::IHeader},
-    shared::{CStringIterator, EOF, FixedSizeStructIterator, IStaticStruct},
+use gshared::{
+    byte_order::ByteOrder,
+    eof::EOF,
+    iterators::{CStringIterator, FixedSizeStructIterator},
+    structs::IStaticStruct,
 };
+
+use crate::parser::variants::singlearch::shared::iheader::IHeader;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct SymbolTable {

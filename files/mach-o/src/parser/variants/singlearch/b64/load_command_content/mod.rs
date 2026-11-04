@@ -2,16 +2,14 @@ pub mod encryption_info;
 pub mod routines;
 pub mod segment;
 
-use crate::{
-    parser::{
-        ByteOrder,
-        variants::singlearch::shared::{
-            iload_command_content::ILoadCommandContent,
-            load_command_content::SharedLoadCommandContent,
-            parse_error::ParseError,
-        },
-    },
-    shared::{IDynamicStruct, parse_dynamic_struct, parse_static_struct},
+use gshared::{
+    byte_order::ByteOrder,
+    structs::{IDynamicStruct, parse_dynamic_struct, parse_static_struct},
+};
+
+use crate::parser::variants::singlearch::shared::{
+    iload_command_content::ILoadCommandContent,
+    load_command_content::SharedLoadCommandContent, parse_error::ParseError,
 };
 
 #[derive(Debug, PartialEq, Eq)]

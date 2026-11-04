@@ -1,4 +1,4 @@
-use crate::parser::ByteOrder;
+use gshared::byte_order::ByteOrder;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Header {

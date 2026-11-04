@@ -1,6 +1,6 @@
-use crate::{
-    parser::ByteOrder,
-    shared::{EOF, FixedSizeStructIterator, IStaticStruct},
+use gshared::{
+    byte_order::ByteOrder, eof::EOF, iterators::FixedSizeStructIterator,
+    structs::IStaticStruct,
 };
 
 #[derive(Debug, PartialEq, Eq)]

@@ -1,4 +1,4 @@
-use crate::parser::ByteOrder;
+use gshared::byte_order::ByteOrder;
 
 use super::load_command::{Header, LoadCommand};
 use super::{ifile::IFile, parse_error::ParseError};

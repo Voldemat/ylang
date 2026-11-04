@@ -1,4 +1,4 @@
-use crate::shared::IStaticStruct;
+use gshared::structs::IStaticStruct;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Symbol {

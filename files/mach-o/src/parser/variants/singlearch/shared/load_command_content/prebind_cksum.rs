@@ -1,4 +1,4 @@
-use crate::{parser::ByteOrder, shared::IStaticStruct};
+use gshared::{byte_order::ByteOrder, structs::IStaticStruct};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PrebindCksum {

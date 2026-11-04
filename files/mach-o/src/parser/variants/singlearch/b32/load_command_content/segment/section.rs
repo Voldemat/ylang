@@ -1,15 +1,14 @@
-use crate::{
-    parser::{
-        ByteOrder,
-        variants::singlearch::shared::relocation_entry::RelocationEntry,
-    },
-    shared::{AsciiString, EOF, FixedSizeStructIterator, IStaticStruct},
+use gshared::{
+    byte_order::ByteOrder, eof::EOF, iterators::FixedSizeStructIterator,
+    string::AsciiStringRef, structs::IStaticStruct,
 };
+
+use crate::parser::variants::singlearch::shared::relocation_entry::RelocationEntry;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Section<'b> {
-    pub section_name: AsciiString<'b, 16>,
-    pub segment_name: AsciiString<'b, 16>,
+    pub section_name: AsciiStringRef<'b, 16>,
+    pub segment_name: AsciiStringRef<'b, 16>,
     pub address: u32,
     pub size: u32,
     pub file_offset: u32,
@@ -49,8 +48,14 @@ impl<'b> IStaticStruct<'b, { Section::BUFFER_SIZE }> for Section<'b> {
         buffer: &'b [u8; Section::BUFFER_SIZE],
     ) -> Self {
         Self {
-            section_name: AsciiString(buffer[0..16].try_into().unwrap()),
-            segment_name: AsciiString(buffer[16..32].try_into().unwrap()),
+            section_name: AsciiStringRef::new(
+                buffer[0..16].try_into().unwrap(),
+            )
+            .unwrap(),
+            segment_name: AsciiStringRef::new(
+                buffer[16..32].try_into().unwrap(),
+            )
+            .unwrap(),
             address: byte_order.read_u32(buffer[32..36].try_into().unwrap()),
             size: byte_order.read_u32(buffer[36..40].try_into().unwrap()),
             file_offset: byte_order

@@ -1,9 +1,7 @@
 mod entry_header;
 pub use entry_header::EntryHeader;
-
-use crate::{
-    parser::ByteOrder,
-    shared::{EOF, FixedSizeStructIterator},
+use gshared::{
+    byte_order::ByteOrder, eof::EOF, iterators::FixedSizeStructIterator,
 };
 
 use super::shared::header::Header;

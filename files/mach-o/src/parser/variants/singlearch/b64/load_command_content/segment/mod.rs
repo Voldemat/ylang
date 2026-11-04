@@ -1,13 +1,13 @@
-use crate::{
-    parser::ByteOrder,
-    shared::{AsciiString, EOF, FixedSizeStructIterator, IDynamicStruct},
+use gshared::{
+    byte_order::ByteOrder, eof::EOF, iterators::FixedSizeStructIterator,
+    string::AsciiStringRef, structs::IDynamicStruct,
 };
 
 pub mod section;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Segment<'b> {
-    pub segment_name: AsciiString<'b, 16>,
+    pub segment_name: AsciiStringRef<'b, 16>,
     pub address: u64,
     pub address_size: u64,
     pub file_offset: u64,
@@ -44,7 +44,10 @@ impl<'b> IDynamicStruct<'b, { Segment::PARAMS_BUFFER_SIZE }> for Segment<'b> {
         sections_buffer: &'b [u8],
     ) -> Self {
         Self {
-            segment_name: AsciiString(params_buffer[0..16].try_into().unwrap()),
+            segment_name: AsciiStringRef::new(
+                params_buffer[0..16].try_into().unwrap(),
+            )
+            .unwrap(),
             address: byte_order
                 .read_u64(params_buffer[16..24].try_into().unwrap()),
             address_size: byte_order

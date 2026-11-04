@@ -1,4 +1,5 @@
-use crate::{parser::ByteOrder, shared::IStaticStruct};
+use crate::parser::ByteOrder;
+use gshared::structs::IStaticStruct;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct RelocationEntry {

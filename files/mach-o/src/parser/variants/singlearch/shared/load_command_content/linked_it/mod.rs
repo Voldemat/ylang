@@ -1,9 +1,8 @@
 pub mod payload;
 
-use crate::{
-    parser::{ByteOrder, variants::singlearch::shared::iheader::IHeader},
-    shared::{EOF, IStaticStruct},
-};
+use gshared::{byte_order::ByteOrder, eof::EOF, structs::IStaticStruct};
+
+use crate::parser::variants::singlearch::shared::iheader::IHeader;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LinkedIt {

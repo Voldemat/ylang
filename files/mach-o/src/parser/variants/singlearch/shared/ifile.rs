@@ -1,4 +1,4 @@
-use crate::parser::ByteOrder;
+use gshared::byte_order::ByteOrder;
 
 pub trait IFile<'b> {
     fn get_byte_order(&self) -> ByteOrder;

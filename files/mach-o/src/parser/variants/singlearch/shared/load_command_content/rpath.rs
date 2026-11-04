@@ -1,7 +1,6 @@
-use crate::{
-    parser::{ByteOrder, variants::singlearch::shared::load_command},
-    shared::{EOF, IDynamicStruct},
-};
+use gshared::{byte_order::ByteOrder, eof::EOF, structs::IDynamicStruct};
+
+use crate::parser::variants::singlearch::shared::load_command;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct RPath<'b> {

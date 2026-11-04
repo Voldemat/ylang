@@ -1,8 +1,6 @@
-pub mod shared;
 pub mod variants;
-pub use shared::ByteOrder;
-
-use crate::shared::EOF;
+pub use gshared::byte_order::ByteOrder;
+use gshared::eof::EOF;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum MachOFile<'b> {

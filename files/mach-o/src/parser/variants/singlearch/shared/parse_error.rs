@@ -1,4 +1,4 @@
-use crate::shared::EOF;
+use gshared::eof::EOF;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {

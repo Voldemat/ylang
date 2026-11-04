@@ -20,11 +20,12 @@ pub mod symbol_table_information;
 pub mod two_level_hints;
 pub mod uuid;
 
-use super::parse_error::ParseError;
-use crate::{
-    parser::ByteOrder,
-    shared::{IDynamicStruct, parse_dynamic_struct, parse_static_struct},
+use gshared::{
+    byte_order::ByteOrder,
+    structs::{IDynamicStruct, parse_dynamic_struct, parse_static_struct},
 };
+
+use super::parse_error::ParseError;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum SharedLoadCommandContent<'b> {

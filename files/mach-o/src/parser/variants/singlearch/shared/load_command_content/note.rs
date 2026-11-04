@@ -1,11 +1,13 @@
-use crate::{
-    parser::{ByteOrder, variants::singlearch::shared::iheader::IHeader},
-    shared::{AsciiString, EOF, IStaticStruct},
+use gshared::{
+    byte_order::ByteOrder, eof::EOF, string::AsciiStringRef,
+    structs::IStaticStruct,
 };
+
+use crate::parser::variants::singlearch::shared::iheader::IHeader;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Note<'b> {
-    pub data_owner: AsciiString<'b, 16>,
+    pub data_owner: AsciiStringRef<'b, 16>,
     pub offset: u64,
     pub size: u64,
 }
@@ -34,7 +36,8 @@ impl<'b> IStaticStruct<'b, { Note::BUFFER_SIZE }> for Note<'b> {
     #[allow(clippy::unwrap_used)]
     fn new(byte_order: ByteOrder, buffer: &'b [u8; Note::BUFFER_SIZE]) -> Self {
         Self {
-            data_owner: AsciiString(buffer[0..16].try_into().unwrap()),
+            data_owner: AsciiStringRef::new(buffer[0..16].try_into().unwrap())
+                .unwrap(),
             offset: byte_order.read_u64(buffer[16..24].try_into().unwrap()),
             size: byte_order.read_u64(buffer[24..32].try_into().unwrap()),
         }

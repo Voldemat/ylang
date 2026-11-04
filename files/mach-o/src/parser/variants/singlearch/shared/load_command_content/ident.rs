@@ -1,6 +1,6 @@
-use crate::{
-    parser::ByteOrder,
-    shared::{CStringIterator, EOF, IDynamicStruct},
+use gshared::{
+    byte_order::ByteOrder, eof::EOF, iterators::CStringIterator,
+    structs::IDynamicStruct,
 };
 
 #[derive(Debug, PartialEq, Eq)]
